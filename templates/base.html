@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Predictive Maintenance Dashboard{% endblock %}</title>
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome Icons -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <!-- Plotly.js for charts -->
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <!-- Custom CSS -->
+    <link href="{{ url_for('static', filename='css/dashboard.css') }}" rel="stylesheet">
+
+    {% block extra_head %}{% endblock %}
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="{{ url_for('dashboard') }}">
+                <i class="fas fa-industry me-2"></i>
+                <strong>Predictive Maintenance</strong>
+            </a>
+
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('dashboard') }}">
+                            <i class="fas fa-tachometer-alt me-1"></i>Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('alerts_page') }}">
+                            <i class="fas fa-exclamation-triangle me-1"></i>Alerts
+                            <span class="badge bg-warning ms-1" id="alert-count">0</span>
+                        </a>
+                    </li>
+                </ul>
+
+                <ul class="navbar-nav">
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-user me-1"></i>System Operator
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="#"><i class="fas fa-cog me-2"></i>Settings</a></li>
+                            <li><a class="dropdown-item" href="#"><i class="fas fa-sign-out-alt me-2"></i>Logout</a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Alert Banner (for critical alerts) -->
+    <div id="critical-alert-banner" class="alert alert-danger alert-dismissible fade show d-none" role="alert">
+        <div class="container-fluid">
+            <h5 class="alert-heading mb-1">
+                <i class="fas fa-exclamation-circle me-2"></i>
+                <strong>CRITICAL SYSTEM ALERT</strong>
+            </h5>
+            <p class="mb-1" id="critical-alert-message">Critical anomaly detected in industrial equipment.</p>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="container-fluid mt-4">
+        {% block content %}{% endblock %}
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-dark text-light text-center py-3 mt-5">
+        <div class="container">
+            <p class="mb-0">
+                <i class="fas fa-shield-alt me-2"></i>
+                AI-Powered Predictive Maintenance System | 
+                <strong>Chemical & Biotech Industries</strong> | 
+                <span id="current-time"></span>
+            </p>
+        </div>
+    </footer>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Global JavaScript -->
+    <script>
+        // Update current time
+        function updateTime() {
+            const now = new Date();
+            document.getElementById('current-time').textContent = now.toLocaleString();
+        }
+        setInterval(updateTime, 1000);
+        updateTime();
+
+        // Global alert management
+        let alertSounds = {
+            warning: new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmslBSqAzPPZiTkIGGOz7+XGXRU1VKrh86xZFAA='),
+            critical: new Audio('data:audio/wav;base64,UklGRtIWAABXQVZFZm10IBAAAAABAAEAwF0AAIB7AQACABAAZGF0Ya4WAADe/IiFhoh3cOqJhq5FQ2FjNwbN6/rVXSMLL4bO8ti+NS8NG36R5PLNfCkHJn7I8t6OPA8RZrfq559NEAxQp+PwtmMcBjiR1/LMeSoFIHfH8N2QQQoUYLTq56xXEwxFoOHyvmsmBCiAzfPaijgHFWW27+OzbyYMLYbS8ty3NCsHGXOc5fXLficGJ3nI8t+OPQ8RZLTq56xYEwtGoeHyvmsmBCqAzfPaiTgIGGO17+OGRRUS')
+        };
+
+        // Check for new alerts periodically
+        function checkAlerts() {
+            fetch('/api/alerts')
+                .then(response => response.json())
+                .then(alerts => {
+                    const unacknowledged = alerts.filter(alert => !alert.is_acknowledged);
+                    document.getElementById('alert-count').textContent = unacknowledged.length;
+
+                    // Show critical alert banner
+                    const criticalAlerts = unacknowledged.filter(alert => alert.severity === 'critical');
+                    if (criticalAlerts.length > 0) {
+                        showCriticalAlert(criticalAlerts[0]);
+                    }
+                });
+        }
+
+        function showCriticalAlert(alert) {
+            const banner = document.getElementById('critical-alert-banner');
+            const message = document.getElementById('critical-alert-message');
+
+            message.textContent = alert.message;
+            banner.classList.remove('d-none');
+
+            // Play critical alert sound
+            if (alertSounds.critical) {
+                alertSounds.critical.play().catch(e => console.log('Audio play failed:', e));
+            }
+        }
+
+        // Start checking alerts
+        setInterval(checkAlerts, 5000);
+        checkAlerts();
+    </script>
+
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

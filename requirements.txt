@@ -1,0 +1,25 @@
+# Core Flask Application
+Flask==3.0.0
+Flask-SQLAlchemy==3.1.1
+Flask-Login==0.6.3
+
+# Machine Learning & Data Processing
+scikit-learn==1.3.2
+numpy==1.26.2
+pandas==2.1.4
+
+
+# Data Visualization
+plotly==5.17.0
+
+# Notifications & Communication
+requests==2.31.0
+twilio==8.10.3
+
+# Web Development
+Jinja2==3.1.2
+Werkzeug==3.0.1
+
+# Utilities
+python-dotenv==1.0.0
+schedule==1.2.0

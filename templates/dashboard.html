@@ -1,0 +1,987 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Predictive Maintenance Dashboard</title>
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome Icons -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Plotly.js for Interactive Charts -->
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+
+    <style>
+        :root {
+            --primary-blue: #1e40af;
+            --success-green: #10b981;
+            --warning-orange: #f59e0b;
+            --danger-red: #ef4444;
+            --dark-bg: #0f172a;
+            --card-bg: #ffffff;
+            --text-primary: #1e293b;
+            --text-secondary: #64748b;
+            --border-light: #e2e8f0;
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body { 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: 'Inter', sans-serif;
+            min-height: 100vh;
+            color: var(--text-primary);
+        }
+
+        /* Animated background */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(45deg, #667eea, #764ba2, #667eea, #764ba2);
+            background-size: 400% 400%;
+            animation: gradientShift 15s ease infinite;
+            z-index: -1;
+        }
+
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* Glassmorphism effect for main content */
+        .container-fluid {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            margin: 20px;
+            padding: 30px;
+            box-shadow: var(--shadow-xl);
+        }
+
+        /* Navigation Bar Enhancement */
+        .navbar {
+            background: rgba(30, 64, 175, 0.9) !important;
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .navbar-brand {
+            font-weight: 700;
+            font-size: 1.3rem;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        /* Statistics Cards Enhancement */
+        .stats-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 16px;
+            padding: 25px;
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: var(--shadow-lg);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stats-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--primary-blue), var(--success-green));
+        }
+
+        .stats-card:hover {
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+        }
+
+        .stats-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+            margin-bottom: 15px;
+        }
+
+        .stats-primary { background: linear-gradient(135deg, var(--primary-blue), #3b82f6); }
+        .stats-success { background: linear-gradient(135deg, var(--success-green), #22c55e); }
+        .stats-warning { background: linear-gradient(135deg, var(--warning-orange), #fbbf24); }
+        .stats-danger { background: linear-gradient(135deg, var(--danger-red), #f87171); }
+
+        .stats-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            line-height: 1;
+            margin-bottom: 5px;
+            background: linear-gradient(135deg, var(--text-primary), var(--text-secondary));
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .stats-label {
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* Machine Cards Enhancement */
+        .machine-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: var(--shadow-lg);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            margin-bottom: 30px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .machine-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 6px;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+        }
+
+        .machine-card:hover {
+            transform: translateY(-12px);
+            box-shadow: 0 32px 64px -12px rgba(0, 0, 0, 0.35);
+        }
+
+        .card-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+            border: none;
+            padding: 25px 30px;
+            border-radius: 20px 20px 0 0 !important;
+        }
+
+        .card-header h5 {
+            font-weight: 600;
+            font-size: 1.3rem;
+            margin: 0;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .card-body {
+            padding: 30px;
+        }
+
+        /* Status Badge Enhancement */
+        .status-badge {
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            box-shadow: var(--shadow-sm);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+        }
+
+        /* Sensor Grid Enhancement */
+        .sensor-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .sensor-card {
+            background: rgba(248, 250, 252, 0.8);
+            border-radius: 16px;
+            padding: 20px;
+            text-align: center;
+            border: 2px solid transparent;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .sensor-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #e2e8f0, #cbd5e1);
+            transition: all 0.3s ease;
+        }
+
+        .sensor-card.normal {
+            border-color: var(--success-green);
+            background: rgba(16, 185, 129, 0.1);
+            box-shadow: 0 4px 20px rgba(16, 185, 129, 0.2);
+        }
+
+        .sensor-card.normal::before {
+            background: linear-gradient(90deg, var(--success-green), #22c55e);
+        }
+
+        .sensor-card.anomaly {
+            border-color: var(--danger-red);
+            background: rgba(239, 68, 68, 0.1);
+            box-shadow: 0 4px 20px rgba(239, 68, 68, 0.3);
+            animation: pulse-red 2s infinite;
+        }
+
+        .sensor-card.anomaly::before {
+            background: linear-gradient(90deg, var(--danger-red), #f87171);
+        }
+
+        @keyframes pulse-red {
+            0%, 100% { box-shadow: 0 4px 20px rgba(239, 68, 68, 0.3); }
+            50% { box-shadow: 0 8px 25px rgba(239, 68, 68, 0.5); }
+        }
+
+        .sensor-value {
+            font-size: 1.4rem;
+            font-weight: 700;
+            margin: 10px 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .sensor-label {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+        }
+
+        /* Chart Container Enhancement */
+        .chart-container {
+            height: 350px;
+            margin-bottom: 20px;
+            background: rgba(255, 255, 255, 0.7);
+            border-radius: 16px;
+            padding: 15px;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .gauge-container {
+            height: 220px;
+            margin-bottom: 15px;
+            background: rgba(255, 255, 255, 0.7);
+            border-radius: 16px;
+            padding: 10px;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Tabs Enhancement */
+        .chart-tabs .nav-link {
+            border: none;
+            border-radius: 12px;
+            font-weight: 600;
+            padding: 12px 20px;
+            margin-right: 8px;
+            background: rgba(248, 250, 252, 0.8);
+            color: var(--text-secondary);
+            transition: all 0.3s ease;
+        }
+
+        .chart-tabs .nav-link.active {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            box-shadow: var(--shadow-md);
+            transform: translateY(-2px);
+        }
+
+        .chart-tabs .nav-link:hover:not(.active) {
+            background: rgba(102, 126, 234, 0.1);
+            color: var(--primary-blue);
+        }
+
+        /* Button Enhancement */
+        .btn-group .btn {
+            font-weight: 600;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 0;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-group .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        .btn-group .btn:hover::before {
+            left: 100%;
+        }
+
+        .btn-group .btn:first-child {
+            border-radius: 12px 0 0 12px;
+        }
+
+        .btn-group .btn:last-child {
+            border-radius: 0 12px 12px 0;
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, var(--success-green), #22c55e);
+            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+        }
+
+        .btn-warning {
+            background: linear-gradient(135deg, var(--warning-orange), #fbbf24);
+            box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3);
+            color: white;
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, var(--danger-red), #f87171);
+            box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3);
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+        }
+
+        /* Alert Banner Enhancement */
+        .alert-banner {
+            position: fixed;
+            top: 56px;
+            left: 0;
+            right: 0;
+            z-index: 9999;
+            border-radius: 0;
+            background: linear-gradient(135deg, var(--danger-red), #dc2626);
+            border: none;
+            box-shadow: var(--shadow-lg);
+            animation: slideDown 0.5s ease;
+        }
+
+        @keyframes slideDown {
+            from {
+                transform: translateY(-100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        /* Dashboard Title Enhancement */
+        .dashboard-title {
+            background: linear-gradient(135deg, #1e40af, #3b82f6);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-weight: 700;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Toast Enhancement */
+        .toast-custom {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 16px;
+            box-shadow: var(--shadow-xl);
+        }
+
+        /* Loading Animation */
+        @keyframes shimmer {
+            0% { background-position: -468px 0; }
+            100% { background-position: 468px 0; }
+        }
+
+        .loading-shimmer {
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background-size: 400% 100%;
+            animation: shimmer 1.5s infinite;
+        }
+
+        /* Scrollbar Enhancement */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(135deg, #5a67d8, #6b46c1);
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .container-fluid {
+                margin: 10px;
+                padding: 20px;
+            }
+
+            .sensor-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .chart-container {
+                height: 250px;
+            }
+
+            .stats-value {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="/">
+                <i class="fas fa-industry me-2"></i>
+                <strong>Predictive Maintenance System</strong>
+            </a>
+
+            <div class="navbar-nav ms-auto">
+                <span class="nav-link text-white">
+                    <i class="fas fa-bell me-1"></i>Alerts
+                    <span class="badge bg-warning text-dark ms-1" id="alert-count">0</span>
+                </span>
+                <span class="nav-link text-white">
+                    <i class="fas fa-clock me-1"></i>
+                    <span id="current-time"></span>
+                </span>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Critical Alert Banner -->
+    <div id="critical-alert-banner" class="alert alert-danger alert-banner d-none" role="alert">
+        <div class="container-fluid text-center">
+            <h6 class="alert-heading mb-1">
+                <i class="fas fa-exclamation-circle me-2"></i>
+                <strong>🚨 CRITICAL SYSTEM ALERT</strong>
+            </h6>
+            <p class="mb-0 small" id="critical-alert-message">Critical anomaly detected in industrial equipment.</p>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="container-fluid">
+        <!-- Dashboard Header -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h1 class="dashboard-title">
+                        <i class="fas fa-tachometer-alt me-2"></i>
+                        Industrial Monitoring Dashboard
+                    </h1>
+                    <div class="text-end">
+                        <span class="badge bg-success me-2">
+                            <i class="fas fa-circle me-1"></i>System Online
+                        </span>
+                        <span class="text-muted">Last Update: <span id="last-update">Loading...</span></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Statistics -->
+        <div class="row mb-5">
+            <div class="col-lg-3 col-md-6 mb-4">
+                <div class="stats-card">
+                    <div class="stats-icon stats-primary text-white">
+                        <i class="fas fa-industry"></i>
+                    </div>
+                    <div class="stats-value">{{ machines|length }}</div>
+                    <div class="stats-label">Total Machines</div>
+                </div>
+            </div>
+
+            <div class="col-lg-3 col-md-6 mb-4">
+                <div class="stats-card">
+                    <div class="stats-icon stats-success text-white">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                    <div class="stats-value" id="normal-count">-</div>
+                    <div class="stats-label">Normal Status</div>
+                </div>
+            </div>
+
+            <div class="col-lg-3 col-md-6 mb-4">
+                <div class="stats-card">
+                    <div class="stats-icon stats-warning text-white">
+                        <i class="fas fa-wrench"></i>
+                    </div>
+                    <div class="stats-value" id="maintenance-count">-</div>
+                    <div class="stats-label">Maintenance</div>
+                </div>
+            </div>
+
+            <div class="col-lg-3 col-md-6 mb-4">
+                <div class="stats-card">
+                    <div class="stats-icon stats-danger text-white">
+                        <i class="fas fa-exclamation-triangle"></i>
+                    </div>
+                    <div class="stats-value" id="critical-count">-</div>
+                    <div class="stats-label">Critical Alerts</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Machine Cards with Enhanced Charts -->
+        <div class="row">
+            {% for machine in machines %}
+            <div class="col-12 mb-4">
+                <div class="card machine-card" data-machine-id="{{ machine.id }}">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">
+                            <i class="fas fa-cog me-2"></i>
+                            {{ machine.name }}
+                        </h5>
+                        <div class="d-flex align-items-center">
+                            <span class="status-badge bg-success me-3" id="status-{{ machine.id }}">
+                                {{ machine.status.title() }}
+                            </span>
+                            <small class="text-light">
+                                <i class="fas fa-map-marker-alt me-1"></i>
+                                {{ machine.location }}
+                            </small>
+                        </div>
+                    </div>
+
+                    <div class="card-body">
+                        <!-- Machine Description -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <p class="text-muted mb-0" style="font-style: italic;">{{ machine.description }}</p>
+                            </div>
+                        </div>
+
+                        <!-- Real-time Sensor Values Grid -->
+                        <div class="sensor-grid" id="sensor-grid-{{ machine.id }}">
+                            <!-- Sensor cards will be populated here -->
+                        </div>
+
+                        <!-- Chart Tabs -->
+                        <ul class="nav nav-tabs chart-tabs" id="chart-tabs-{{ machine.id }}" role="tablist">
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link active" id="trend-tab-{{ machine.id }}" data-bs-toggle="tab" 
+                                        data-bs-target="#trend-{{ machine.id }}" type="button" role="tab">
+                                    <i class="fas fa-chart-line me-1"></i>Real-Time Trends
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="gauge-tab-{{ machine.id }}" data-bs-toggle="tab" 
+                                        data-bs-target="#gauge-{{ machine.id }}" type="button" role="tab">
+                                    <i class="fas fa-tachometer-alt me-1"></i>Live Gauges
+                                </button>
+                            </li>
+                        </ul>
+
+                        <!-- Chart Content -->
+                        <div class="tab-content" id="chart-content-{{ machine.id }}">
+                            <!-- Time Series Trends -->
+                            <div class="tab-pane fade show active" id="trend-{{ machine.id }}" role="tabpanel">
+                                <div class="chart-container" id="trend-chart-{{ machine.id }}">
+                                    <!-- Plotly chart will be rendered here -->
+                                </div>
+                            </div>
+                            <!-- Gauge Charts -->
+                            <div class="tab-pane fade" id="gauge-{{ machine.id }}" role="tabpanel">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="gauge-container" id="gauge-1-{{ machine.id }}"></div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="gauge-container" id="gauge-2-{{ machine.id }}"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Control Buttons -->
+                        <div class="btn-group w-100 mt-4" role="group">
+                            <button class="btn btn-success" onclick="setMachineMode({{ machine.id }}, 'normal')">
+                                <i class="fas fa-play me-1"></i>Normal Operation
+                            </button>
+                            <button class="btn btn-warning" onclick="setMachineMode({{ machine.id }}, 'maintenance')">
+                                <i class="fas fa-wrench me-1"></i>Maintenance Mode
+                            </button>
+                            <button class="btn btn-danger" onclick="setMachineMode({{ machine.id }}, 'sabotage')">
+                                <i class="fas fa-exclamation-triangle me-1"></i>Sabotage Test
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        // Same JavaScript functionality as before - keeping all the existing chart logic
+        let machines = [];
+        let chartData = {};
+        let charts = {};
+
+        const MACHINE_CONFIGS = {
+            "Chemical Reactor": {
+                sensors: ["temperature", "pressure", "flow_rate", "level"],
+                gauges: [
+                    {sensor: "temperature", min: 200, max: 800, title: "Temperature (°C)"},
+                    {sensor: "pressure", min: 0, max: 50, title: "Pressure (bar)"}
+                ]
+            },
+            "Biotech Fermenter": {
+                sensors: ["temperature", "ph", "dissolved_oxygen", "agitation"],
+                gauges: [
+                    {sensor: "ph", min: 5, max: 9, title: "pH Level"},
+                    {sensor: "dissolved_oxygen", min: 0, max: 100, title: "DO (%)"}
+                ]
+            },
+            "Distillation Column": {
+                sensors: ["temperature_top", "temperature_bottom", "pressure", "reflux_ratio"],
+                gauges: [
+                    {sensor: "temperature_top", min: 50, max: 200, title: "Top Temp (°C)"},
+                    {sensor: "temperature_bottom", min: 100, max: 300, title: "Bottom Temp (°C)"}
+                ]
+            }
+        };
+
+        function loadMachines() {
+            fetch('/api/machines')
+                .then(response => response.json())
+                .then(data => {
+                    machines = data;
+                    console.log('Loaded machines:', machines);
+                    initializeCharts();
+                })
+                .catch(error => console.error('Error loading machines:', error));
+        }
+
+        function updateTime() {
+            document.getElementById('current-time').textContent = new Date().toLocaleTimeString();
+        }
+        setInterval(updateTime, 1000);
+        updateTime();
+
+        function initializeCharts() {
+            machines.forEach(machine => {
+                initializeMachineChart(machine);
+                initializeMachineGauges(machine);
+            });
+        }
+
+        function initializeMachineChart(machine) {
+            const config = MACHINE_CONFIGS[machine.machine_type];
+            if (!config) return;
+
+            chartData[machine.id] = {};
+            config.sensors.forEach(sensor => {
+                chartData[machine.id][sensor] = { x: [], y: [], anomalies: [] };
+            });
+
+            const traces = config.sensors.map(sensor => ({
+                x: [], y: [], type: 'scatter', mode: 'lines+markers',
+                name: sensor.replace('_', ' ').toUpperCase(),
+                line: {width: 3}, marker: {size: 6}
+            }));
+
+            const layout = {
+                title: { text: `${machine.name} - Real-Time Sensor Data`, font: {size: 16, color: '#1e293b'} },
+                xaxis: { title: 'Time', type: 'date' },
+                yaxis: { title: 'Values' },
+                margin: {l: 60, r: 50, t: 60, b: 50},
+                showlegend: true,
+                legend: {x: 0, y: 1},
+                plot_bgcolor: 'rgba(0,0,0,0)',
+                paper_bgcolor: 'rgba(0,0,0,0)'
+            };
+
+            Plotly.newPlot(`trend-chart-${machine.id}`, traces, layout, {responsive: true, displayModeBar: false});
+        }
+
+        function initializeMachineGauges(machine) {
+            const config = MACHINE_CONFIGS[machine.machine_type];
+            if (!config || !config.gauges) return;
+
+            config.gauges.forEach((gaugeConfig, index) => {
+                const gauge = {
+                    domain: {x: [0, 1], y: [0, 1]}, value: 0,
+                    title: {text: gaugeConfig.title, font: {size: 16}},
+                    type: "indicator", mode: "gauge+number+delta",
+                    gauge: {
+                        axis: {range: [null, gaugeConfig.max]},
+                        bar: {color: "#667eea", thickness: 0.8},
+                        steps: [
+                            {range: [0, gaugeConfig.max * 0.6], color: "#e2e8f0"},
+                            {range: [gaugeConfig.max * 0.6, gaugeConfig.max * 0.8], color: "#cbd5e1"}
+                        ],
+                        threshold: { line: {color: "#ef4444", width: 4}, thickness: 0.75, value: gaugeConfig.max * 0.9 }
+                    }
+                };
+
+                Plotly.newPlot(`gauge-${index + 1}-${machine.id}`, [gauge], 
+                    {margin: {l: 20, r: 20, t: 30, b: 20}, paper_bgcolor: 'rgba(0,0,0,0)'}, 
+                    {responsive: true, displayModeBar: false});
+            });
+        }
+
+        function updateMachineData() {
+            machines.forEach(machine => {
+                fetch(`/api/machine/${machine.id}/latest`)
+                    .then(response => response.json())
+                    .then(data => {
+                        updateMachineCard(machine.id, data);
+                        updateMachineChart(machine.id, data);
+                        updateMachineGauges(machine.id, data);
+                    })
+                    .catch(error => console.error('Error:', error));
+            });
+            document.getElementById('last-update').textContent = new Date().toLocaleTimeString();
+        }
+
+        function updateMachineCard(machineId, data) {
+            const machine = data.machine;
+            const readings = data.readings;
+
+            const statusBadge = document.getElementById(`status-${machineId}`);
+            if (statusBadge) {
+                statusBadge.textContent = machine.status.charAt(0).toUpperCase() + machine.status.slice(1);
+                statusBadge.className = `status-badge ${getStatusBadgeClass(machine.status)} me-3`;
+            }
+
+            const sensorGrid = document.getElementById(`sensor-grid-${machineId}`);
+            if (sensorGrid && Object.keys(readings).length > 0) {
+                let gridHtml = '';
+                Object.entries(readings).forEach(([sensorType, reading]) => {
+                    const anomalyClass = reading.is_anomaly ? 'anomaly' : 'normal';
+                    const anomalyIcon = reading.is_anomaly ? 'fa-exclamation-triangle text-danger' : 'fa-check-circle text-success';
+
+                    gridHtml += `
+                        <div class="sensor-card ${anomalyClass}">
+                            <div class="sensor-label">${sensorType.replace('_', ' ')}</div>
+                            <div class="sensor-value ${reading.is_anomaly ? 'text-danger' : 'text-success'}">
+                                <i class="fas ${anomalyIcon}"></i>
+                                ${reading.value} ${reading.unit}
+                            </div>
+                            <small class="text-muted">Score: ${(reading.anomaly_score * 100).toFixed(1)}%</small>
+                        </div>
+                    `;
+                });
+                sensorGrid.innerHTML = gridHtml;
+            }
+        }
+
+        function updateMachineChart(machineId, data) {
+            if (!chartData[machineId] || !data.readings) return;
+
+            const currentTime = new Date(data.timestamp);
+            const readings = data.readings;
+
+            Object.entries(readings).forEach(([sensorType, reading]) => {
+                if (chartData[machineId][sensorType]) {
+                    chartData[machineId][sensorType].x.push(currentTime);
+                    chartData[machineId][sensorType].y.push(reading.value);
+                    chartData[machineId][sensorType].anomalies.push(reading.is_anomaly);
+
+                    if (chartData[machineId][sensorType].x.length > 50) {
+                        chartData[machineId][sensorType].x.shift();
+                        chartData[machineId][sensorType].y.shift();
+                        chartData[machineId][sensorType].anomalies.shift();
+                    }
+                }
+            });
+
+            const traces = [];
+            Object.keys(chartData[machineId]).forEach(sensorType => {
+                if (chartData[machineId][sensorType].x.length > 0) {
+                    traces.push({
+                        x: chartData[machineId][sensorType].x,
+                        y: chartData[machineId][sensorType].y,
+                        type: 'scatter', mode: 'lines+markers',
+                        name: sensorType.replace('_', ' ').toUpperCase(),
+                        line: {width: 3},
+                        marker: {
+                            size: 8,
+                            color: chartData[machineId][sensorType].anomalies.map(a => a ? '#ef4444' : '#667eea')
+                        }
+                    });
+                }
+            });
+
+            if (traces.length > 0) {
+                Plotly.restyle(`trend-chart-${machineId}`, {
+                    x: traces.map(t => t.x),
+                    y: traces.map(t => t.y),
+                    'marker.color': traces.map(t => t.marker.color)
+                });
+            }
+        }
+
+        function updateMachineGauges(machineId, data) {
+            const machine = machines.find(m => m.id === machineId);
+            if (!machine) return;
+
+            const config = MACHINE_CONFIGS[machine.machine_type];
+            if (!config || !config.gauges) return;
+
+            config.gauges.forEach((gaugeConfig, index) => {
+                const reading = data.readings[gaugeConfig.sensor];
+                if (reading) {
+                    Plotly.restyle(`gauge-${index + 1}-${machineId}`, {
+                        value: [reading.value],
+                        'gauge.bar.color': [reading.is_anomaly ? '#ef4444' : '#10b981']
+                    });
+                }
+            });
+        }
+
+        function getStatusBadgeClass(status) {
+            return {
+                'normal': 'bg-success',
+                'maintenance': 'bg-warning text-dark',
+                'sabotage': 'bg-danger',
+                'shutdown': 'bg-secondary'
+            }[status] || 'bg-secondary';
+        }
+
+        function updateStatistics() {
+            fetch('/api/machines')
+                .then(response => response.json())
+                .then(machines => {
+                    const counts = { normal: 0, maintenance: 0, critical: 0 };
+                    machines.forEach(machine => {
+                        if (machine.status === 'normal') counts.normal++;
+                        else if (machine.status === 'maintenance') counts.maintenance++;
+                        else if (machine.status === 'sabotage') counts.critical++;
+                    });
+
+                    document.getElementById('normal-count').textContent = counts.normal;
+                    document.getElementById('maintenance-count').textContent = counts.maintenance;
+                    document.getElementById('critical-count').textContent = counts.critical;
+                });
+        }
+
+        function setMachineMode(machineId, mode) {
+            fetch(`/api/machine/${machineId}/mode`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ mode: mode })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showToast(`✅ Machine mode changed to ${mode.toUpperCase()}!`, 'success');
+
+                    if (chartData[machineId]) {
+                        Object.keys(chartData[machineId]).forEach(sensor => {
+                            chartData[machineId][sensor] = {x: [], y: [], anomalies: []};
+                        });
+                    }
+
+                    setTimeout(() => {
+                        updateMachineData();
+                        updateStatistics();
+                    }, 2000);
+                }
+            })
+            .catch(error => console.error('Error:', error));
+        }
+
+        function checkAlerts() {
+            fetch('/api/alerts')
+                .then(response => response.json())
+                .then(alerts => {
+                    const criticalAlerts = alerts.filter(alert => !alert.is_acknowledged && alert.severity === 'critical');
+                    document.getElementById('alert-count').textContent = alerts.filter(a => !a.is_acknowledged).length;
+
+                    if (criticalAlerts.length > 0) {
+                        const banner = document.getElementById('critical-alert-banner');
+                        document.getElementById('critical-alert-message').textContent = criticalAlerts[0].message;
+                        banner.classList.remove('d-none');
+                    }
+                });
+        }
+
+        function showToast(message, type) {
+            const toast = document.createElement('div');
+            toast.className = `alert alert-${type === 'success' ? 'success' : 'danger'} toast-custom alert-dismissible fade show position-fixed`;
+            toast.style.cssText = 'top: 100px; right: 20px; z-index: 9999; min-width: 300px;';
+            toast.innerHTML = `
+                <small><strong>${message}</strong></small>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.parentNode?.removeChild(toast), 4000);
+        }
+
+        // Initialize everything
+        console.log('🚀 Initializing stunning dashboard...');
+        loadMachines();
+
+        setTimeout(() => {
+            updateMachineData();
+            updateStatistics();
+            checkAlerts();
+
+            setInterval(() => {
+                updateMachineData();
+                updateStatistics();
+            }, 5000);
+
+            setInterval(checkAlerts, 10000);
+            console.log('✅ Stunning dashboard ready!');
+        }, 2000);
+    </script>
+</body>
+</html>

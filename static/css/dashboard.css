@@ -1,0 +1,12 @@
+/* Custom Dashboard Styling */
+body { background-color: #f8f9fa; }
+.machine-card { transition: all 0.3s ease; border-radius: 12px; }
+.machine-card:hover { transform: translateY(-8px); box-shadow: 0 8px 25px rgba(0,0,0,0.15); }
+.status-badge { font-size: 0.85rem; font-weight: 600; }
+.bg-success { background-color: #28a745 !important; }
+.bg-warning { background-color: #ffc107 !important; color: #000; }
+.bg-danger { background-color: #dc3545 !important; }
+.card-header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
+.btn-group .btn { border-radius: 0; }
+.btn-group .btn:first-child { border-radius: 0.375rem 0 0 0.375rem; }
+.btn-group .btn:last-child { border-radius: 0 0.375rem 0.375rem 0; }
