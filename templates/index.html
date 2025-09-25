@@ -1,0 +1,758 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Predictive Industrial Safety & Monitoring AI</title>
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome Icons -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- AOS Animation Library -->
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+
+    <style>
+        :root {
+            --primary-blue: #1e40af;
+            --secondary-purple: #764ba2;
+            --accent-teal: #06b6d4;
+            --success-green: #059669;
+            --warning-orange: #d97706;
+            --danger-red: #dc2626;
+            --text-primary: #1e293b;
+            --text-secondary: #64748b;
+            --bg-light: #f8fafc;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            line-height: 1.6;
+            color: var(--text-primary);
+            overflow-x: hidden;
+        }
+
+        /* Animated Background */
+        .hero-section {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #667eea 100%);
+            background-size: 400% 400%;
+            animation: gradientShift 15s ease infinite;
+            min-height: 100vh;
+            position: relative;
+        }
+
+        @keyframes gradientShift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        /* Navigation */
+        .navbar {
+            background: rgba(15, 23, 42, 0.95) !important;
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s ease;
+        }
+
+        .navbar-brand {
+            font-size: 1.8rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #3b82f6, #06b6d4);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .navbar-nav .nav-link {
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin: 0 15px;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .navbar-nav .nav-link::after {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 3px;
+            bottom: -5px;
+            left: 50%;
+            background: linear-gradient(90deg, #3b82f6, #06b6d4);
+            transition: all 0.3s ease;
+            transform: translateX(-50%);
+        }
+
+        .navbar-nav .nav-link:hover::after,
+        .navbar-nav .nav-link.active::after {
+            width: 100%;
+        }
+
+        .navbar-nav .nav-link:hover {
+            color: #06b6d4 !important;
+            transform: translateY(-2px);
+        }
+
+        /* Hero Section */
+        .hero-content {
+            position: relative;
+            z-index: 2;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+        }
+
+        .hero-title {
+            font-size: 4.5rem;
+            font-weight: 800;
+            margin-bottom: 2rem;
+            background: linear-gradient(135deg, #ffffff, #e2e8f0);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            line-height: 1.1;
+        }
+
+        .hero-subtitle {
+            font-size: 1.5rem;
+            color: rgba(255, 255, 255, 0.9);
+            margin-bottom: 3rem;
+            font-weight: 400;
+        }
+
+        .hero-buttons {
+            margin-bottom: 4rem;
+        }
+
+        .btn-primary-custom {
+            background: linear-gradient(135deg, #3b82f6, #1e40af);
+            border: none;
+            padding: 15px 40px;
+            font-size: 1.2rem;
+            font-weight: 600;
+            border-radius: 50px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: all 0.3s ease;
+            box-shadow: 0 10px 30px rgba(59, 130, 246, 0.4);
+            margin-right: 20px;
+        }
+
+        .btn-primary-custom:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(59, 130, 246, 0.6);
+            background: linear-gradient(135deg, #2563eb, #1d4ed8);
+        }
+
+        .btn-outline-custom {
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            padding: 15px 40px;
+            font-size: 1.2rem;
+            font-weight: 600;
+            border-radius: 50px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: white;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        .btn-outline-custom:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(255, 255, 255, 0.2);
+            color: white;
+        }
+
+        /* Features Grid */
+        .features-section {
+            background: var(--bg-light);
+            padding: 120px 0;
+        }
+
+        .feature-card {
+            background: white;
+            border-radius: 20px;
+            padding: 40px 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+            height: 100%;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .feature-card:hover {
+            transform: translateY(-15px);
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
+        }
+
+        .feature-icon {
+            width: 80px;
+            height: 80px;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+            color: white;
+            margin-bottom: 25px;
+        }
+
+        .feature-icon.ai { background: linear-gradient(135deg, #8b5cf6, #a855f7); }
+        .feature-icon.realtime { background: linear-gradient(135deg, #10b981, #059669); }
+        .feature-icon.predictive { background: linear-gradient(135deg, #f59e0b, #d97706); }
+        .feature-icon.industrial { background: linear-gradient(135deg, #3b82f6, #1e40af); }
+        .feature-icon.alerts { background: linear-gradient(135deg, #ef4444, #dc2626); }
+        .feature-icon.analytics { background: linear-gradient(135deg, #06b6d4, #0891b2); }
+
+        .feature-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 15px;
+            color: var(--text-primary);
+        }
+
+        .feature-description {
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+            line-height: 1.6;
+        }
+
+        /* Technology Stack */
+        .tech-section {
+            background: linear-gradient(135deg, #1e293b, #334155);
+            padding: 120px 0;
+            color: white;
+        }
+
+        .tech-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 30px;
+            margin-top: 60px;
+        }
+
+        .tech-item {
+            text-align: center;
+            padding: 30px 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: all 0.3s ease;
+        }
+
+        .tech-item:hover {
+            transform: translateY(-10px);
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .tech-icon {
+            font-size: 3rem;
+            margin-bottom: 20px;
+            color: #06b6d4;
+        }
+
+        .tech-name {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .tech-description {
+            font-size: 0.9rem;
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        /* Statistics Section */
+        .stats-section {
+            background: white;
+            padding: 120px 0;
+        }
+
+        .stat-item {
+            text-align: center;
+            padding: 40px 20px;
+        }
+
+        .stat-number {
+            font-size: 4rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+        }
+
+        .stat-label {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* CTA Section */
+        .cta-section {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 120px 0;
+            text-align: center;
+            color: white;
+        }
+
+        .cta-title {
+            font-size: 3.5rem;
+            font-weight: 800;
+            margin-bottom: 2rem;
+        }
+
+        .cta-subtitle {
+            font-size: 1.4rem;
+            margin-bottom: 3rem;
+            opacity: 0.9;
+        }
+
+        /* Footer */
+        .footer {
+            background: #0f172a;
+            padding: 60px 0 30px;
+            color: white;
+        }
+
+        .footer-content {
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding-bottom: 40px;
+            margin-bottom: 30px;
+        }
+
+        .footer-brand {
+            font-size: 2rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #3b82f6, #06b6d4);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 20px;
+        }
+
+        .footer-description {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 1.1rem;
+            line-height: 1.6;
+        }
+
+        .footer-bottom {
+            text-align: center;
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .hero-title {
+                font-size: 3rem;
+            }
+
+            .hero-subtitle {
+                font-size: 1.2rem;
+            }
+
+            .btn-primary-custom,
+            .btn-outline-custom {
+                padding: 12px 30px;
+                font-size: 1rem;
+                margin-bottom: 15px;
+                display: block;
+                width: 100%;
+            }
+
+            .stat-number {
+                font-size: 3rem;
+            }
+
+            .cta-title {
+                font-size: 2.5rem;
+            }
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 10px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+            border-radius: 5px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(135deg, #2563eb, #7c3aed);
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark fixed-top">
+        <div class="container">
+            <a class="navbar-brand" href="#home">
+                <i class="fas fa-industry me-2"></i>
+                <strong>PRISM</strong>
+            </a>
+
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="#home">Home</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#about">About</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/dashboard">Launch Dashboard</a>
+                    </li>
+                    <li><a href="/contact">Contact</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section id="home" class="hero-section">
+        <div class="container hero-content">
+            <div class="row align-items-center">
+                <div class="col-lg-6" data-aos="fade-right">
+                    <h1 class="hero-title">
+                        Predictive Industrial<br>
+                        <span style="background: linear-gradient(135deg, #fbbf24, #f59e0b); background-clip: text; -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Safety & Monitoring</span><br>
+                        AI
+                    </h1>
+                    <p class="hero-subtitle">
+                        Revolutionizing industrial operations with intelligent monitoring, 
+                        real-time anomaly detection, and predictive analytics for maximum efficiency.
+                    </p>
+                    <div class="hero-buttons">
+                        <a href="/dashboard" class="btn btn-primary-custom">
+                            <i class="fas fa-rocket me-2"></i>Launch Dashboard
+                        </a>
+                        <a href="#about" class="btn btn-outline-custom">
+                            <i class="fas fa-info-circle me-2"></i>Learn More
+                        </a>
+                    </div>
+                </div>
+                <div class="col-lg-6" data-aos="fade-left" data-aos-delay="200">
+                    <div class="text-center">
+                        <i class="fas fa-industry" style="font-size: 15rem; color: rgba(255, 255, 255, 0.2);"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section id="about" class="features-section">
+        <div class="container">
+            <div class="text-center mb-5" data-aos="fade-up">
+                <h2 style="font-size: 3.5rem; font-weight: 800; color: var(--text-primary); margin-bottom: 20px;">
+                    Why Choose Our System?
+                </h2>
+                <p style="font-size: 1.3rem; color: var(--text-secondary); max-width: 800px; margin: 0 auto;">
+                    Our AI-powered predictive maintenance system combines cutting-edge technology 
+                    with industrial expertise to deliver unprecedented operational efficiency.
+                </p>
+            </div>
+
+            <div class="row g-4">
+                <div class="col-lg-4 col-md-6" data-aos="fade-up" data-aos-delay="100">
+                    <div class="feature-card">
+                        <div class="feature-icon ai">
+                            <i class="fas fa-brain"></i>
+                        </div>
+                        <h3 class="feature-title">AI-Powered Analytics</h3>
+                        <p class="feature-description">
+                            Advanced machine learning algorithms analyze sensor data patterns to predict equipment failures before they occur, reducing downtime by up to 75%.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="col-lg-4 col-md-6" data-aos="fade-up" data-aos-delay="200">
+                    <div class="feature-card">
+                        <div class="feature-icon realtime">
+                            <i class="fas fa-tachometer-alt"></i>
+                        </div>
+                        <h3 class="feature-title">Real-Time Monitoring</h3>
+                        <p class="feature-description">
+                            Continuous monitoring of critical parameters with instant alerts and automated responses. Monitor temperature, pressure, flow rates, and more in real-time.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="col-lg-4 col-md-6" data-aos="fade-up" data-aos-delay="300">
+                    <div class="feature-card">
+                        <div class="feature-icon predictive">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+                        <h3 class="feature-title">Predictive Insights</h3>
+                        <p class="feature-description">
+                            Smart forecasting models predict maintenance needs, optimize schedules, and provide actionable insights to maximize equipment lifespan and performance.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="col-lg-4 col-md-6" data-aos="fade-up" data-aos-delay="400">
+                    <div class="feature-card">
+                        <div class="feature-icon industrial">
+                            <i class="fas fa-industry"></i>
+                        </div>
+                        <h3 class="feature-title">Industrial Grade</h3>
+                        <p class="feature-description">
+                            Built for harsh industrial environments with enterprise-grade security, scalability, and reliability. Supports chemical, biotech, and manufacturing sectors.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="col-lg-4 col-md-6" data-aos="fade-up" data-aos-delay="500">
+                    <div class="feature-card">
+                        <div class="feature-icon alerts">
+                            <i class="fas fa-exclamation-triangle"></i>
+                        </div>
+                        <h3 class="feature-title">Smart Alerts</h3>
+                        <p class="feature-description">
+                            Multi-level alert system with email, SMS, and emergency protocols. Critical situations trigger automatic shutdowns and emergency response procedures.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="col-lg-4 col-md-6" data-aos="fade-up" data-aos-delay="600">
+                    <div class="feature-card">
+                        <div class="feature-icon analytics">
+                            <i class="fas fa-chart-pie"></i>
+                        </div>
+                        <h3 class="feature-title">Advanced Analytics</h3>
+                        <p class="feature-description">
+                            Comprehensive dashboards with interactive visualizations, trend analysis, efficiency metrics, and detailed reporting for data-driven decisions.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Technology Stack -->
+    <section class="tech-section">
+        <div class="container">
+            <div class="text-center mb-5" data-aos="fade-up">
+                <h2 style="font-size: 3.5rem; font-weight: 800; margin-bottom: 20px;">
+                    Powered by Modern Technology
+                </h2>
+                <p style="font-size: 1.3rem; opacity: 0.9; max-width: 800px; margin: 0 auto;">
+                    Built with industry-leading technologies and frameworks for maximum performance, 
+                    scalability, and reliability in mission-critical industrial environments.
+                </p>
+            </div>
+
+            <div class="tech-grid">
+                <div class="tech-item" data-aos="zoom-in" data-aos-delay="100">
+                    <div class="tech-icon"><i class="fab fa-python"></i></div>
+                    <div class="tech-name">Python</div>
+                    <div class="tech-description">Backend processing & ML algorithms</div>
+                </div>
+
+                <div class="tech-item" data-aos="zoom-in" data-aos-delay="200">
+                    <div class="tech-icon"><i class="fas fa-flask"></i></div>
+                    <div class="tech-name">Flask</div>
+                    <div class="tech-description">Web framework & API services</div>
+                </div>
+
+                <div class="tech-item" data-aos="zoom-in" data-aos-delay="300">
+                    <div class="tech-icon"><i class="fas fa-chart-bar"></i></div>
+                    <div class="tech-name">Plotly</div>
+                    <div class="tech-description">Interactive data visualization</div>
+                </div>
+
+                <div class="tech-item" data-aos="zoom-in" data-aos-delay="400">
+                    <div class="tech-icon"><i class="fas fa-database"></i></div>
+                    <div class="tech-name">SQLAlchemy</div>
+                    <div class="tech-description">Database management & ORM</div>
+                </div>
+
+                <div class="tech-item" data-aos="zoom-in" data-aos-delay="500">
+                    <div class="tech-icon"><i class="fab fa-js"></i></div>
+                    <div class="tech-name">JavaScript</div>
+                    <div class="tech-description">Real-time frontend interactions</div>
+                </div>
+
+                <div class="tech-item" data-aos="zoom-in" data-aos-delay="600">
+                    <div class="tech-icon"><i class="fab fa-bootstrap"></i></div>
+                    <div class="tech-name">Bootstrap</div>
+                    <div class="tech-description">Responsive UI components</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Statistics -->
+    <section class="stats-section">
+        <div class="container">
+            <div class="text-center mb-5" data-aos="fade-up">
+                <h2 style="font-size: 3.5rem; font-weight: 800; color: var(--text-primary); margin-bottom: 20px;">
+                    Impressive Results
+                </h2>
+                <p style="font-size: 1.3rem; color: var(--text-secondary); max-width: 800px; margin: 0 auto;">
+                    Our AI-powered system delivers measurable improvements in operational efficiency and cost reduction.
+                </p>
+            </div>
+
+            <div class="row">
+                <div class="col-lg-3 col-md-6" data-aos="fade-up" data-aos-delay="100">
+                    <div class="stat-item">
+                        <div class="stat-number">75%</div>
+                        <div class="stat-label">Downtime Reduction</div>
+                    </div>
+                </div>
+
+                <div class="col-lg-3 col-md-6" data-aos="fade-up" data-aos-delay="200">
+                    <div class="stat-item">
+                        <div class="stat-number">90%</div>
+                        <div class="stat-label">Failure Prediction</div>
+                    </div>
+                </div>
+
+                <div class="col-lg-3 col-md-6" data-aos="fade-up" data-aos-delay="300">
+                    <div class="stat-item">
+                        <div class="stat-number">50%</div>
+                        <div class="stat-label">Cost Savings</div>
+                    </div>
+                </div>
+
+                <div class="col-lg-3 col-md-6" data-aos="fade-up" data-aos-delay="400">
+                    <div class="stat-item">
+                        <div class="stat-number">24/7</div>
+                        <div class="stat-label">Monitoring</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Call to Action -->
+    <section class="cta-section">
+        <div class="container">
+            <div data-aos="fade-up">
+                <h2 class="cta-title">Ready to Transform Your Operations?</h2>
+                <p class="cta-subtitle">
+                    Experience the future of industrial maintenance with our AI-powered solution.
+                </p>
+                <a href="/dashboard" class="btn btn-primary-custom btn-lg">
+                    <i class="fas fa-rocket me-2"></i>Launch Dashboard Now
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="row">
+                    <div class="col-lg-8">
+                        <div class="footer-brand">AI-Powered Predictive Maintenance</div>
+                        <p class="footer-description">
+                            Revolutionizing industrial operations through intelligent monitoring, predictive analytics, 
+                            and automated maintenance solutions. Built for the future of industrial automation.
+                        </p>
+                    </div>
+                    <div class="col-lg-4 text-lg-end">
+                        <div class="social-links">
+                            <h5 style="color: white; margin-bottom: 20px;">Connect With Us</h5>
+                            <div>
+                                <i class="fab fa-linkedin" style="font-size: 2rem; margin: 0 10px; color: #06b6d4;"></i>
+                                <i class="fab fa-github" style="font-size: 2rem; margin: 0 10px; color: #06b6d4;"></i>
+                                <i class="fas fa-envelope" style="font-size: 2rem; margin: 0 10px; color: #06b6d4;"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2025 AI-Powered Predictive Maintenance System. Built for Industrial Excellence.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script>
+        // Initialize AOS
+        AOS.init({
+            duration: 1000,
+            once: true,
+            offset: 100
+        });
+
+        // Navbar scroll effect
+        window.addEventListener('scroll', function() {
+            const navbar = document.querySelector('.navbar');
+            if (window.scrollY > 50) {
+                navbar.style.background = 'rgba(15, 23, 42, 0.98)';
+            } else {
+                navbar.style.background = 'rgba(15, 23, 42, 0.95)';
+            }
+        });
+
+        // Smooth scrolling for navigation links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+
+        // Update active navigation link on scroll
+        window.addEventListener('scroll', function() {
+            let current = '';
+            const sections = document.querySelectorAll('section[id]');
+
+            sections.forEach(section => {
+                const sectionTop = section.offsetTop;
+                const sectionHeight = section.clientHeight;
+                if (window.scrollY >= (sectionTop - 200)) {
+                    current = section.getAttribute('id');
+                }
+            });
+
+            document.querySelectorAll('.nav-link').forEach(link => {
+                link.classList.remove('active');
+                if (link.getAttribute('href') === `#${current}`) {
+                    link.classList.add('active');
+                }
+            });
+        });
+    </script>
+</body>
+</html>
