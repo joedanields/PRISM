@@ -3,705 +3,839 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Industrial Predictive Maintenance System</title>
-
-    <!-- Bootstrap CSS -->
+    <title>Industrial Plant Alpha - Mission Control Dashboard</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Font Awesome Icons -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <!-- Plotly.js for Charts -->
-    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
-
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
     <style>
         :root {
-            --primary-dark: #0f172a;
-            --primary-blue: #1e40af;
-            --success-green: #059669;
-            --warning-orange: #d97706;
-            --danger-red: #dc2626;
-            --card-bg: #ffffff;
-            --glass-bg: rgba(255, 255, 255, 0.1);
-            --text-primary: #1e293b;
-            --text-secondary: #64748b;
-            --border-light: #e2e8f0;
+            --primary-color: #1e40af;
+            --secondary-color: #3b82f6;
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --danger-color: #ef4444;
+            --dark-color: #1f2937;
+            --light-color: #f8fafc;
+            --border-color: #e5e7eb;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
         }
 
         * {
+            box-sizing: border-box;
             margin: 0;
             padding: 0;
-            box-sizing: border-box;
         }
 
-        body { 
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #667eea 100%);
-            background-size: 400% 400%;
-            animation: gradientShift 20s ease infinite;
-            font-family: 'Inter', sans-serif;
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%);
+            color: #e2e8f0;
+            line-height: 1.6;
+            font-size: 14px;
             min-height: 100vh;
-            color: var(--text-primary);
-            transition: all 0.3s ease;
+            overflow-x: hidden;
         }
 
-        /* CRITICAL ALERT SCREEN BLINK */
-        body.critical-alert {
-            animation: criticalBlink 1s infinite alternate;
-        }
-
-        @keyframes criticalBlink {
-            0% { 
-                background: linear-gradient(135deg, #dc2626 0%, #991b1b 50%, #dc2626 100%);
-                box-shadow: inset 0 0 100px rgba(220, 38, 38, 0.5);
-            }
-            100% { 
-                background: linear-gradient(135deg, #ef4444 0%, #dc2626 50%, #ef4444 100%);
-                box-shadow: inset 0 0 100px rgba(239, 68, 68, 0.7);
-            }
-        }
-
-        @keyframes gradientShift {
-            0%, 100% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-        }
-
-        /* Header Enhancements */
-        .main-header {
+        /* PROFESSIONAL NAVIGATION BAR */
+        .top-nav {
             background: rgba(15, 23, 42, 0.95);
-            backdrop-filter: blur(20px);
+            backdrop-filter: blur(10px);
             border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            padding: 1rem 0;
             position: sticky;
             top: 0;
             z-index: 1000;
         }
 
-        .brand-logo {
+        .nav-brand {
             font-size: 1.5rem;
             font-weight: 700;
-            background: linear-gradient(135deg, #3b82f6, #06b6d4);
-            background-clip: text;
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
+            color: #60a5fa;
+            text-decoration: none;
+        }
+
+        .nav-brand:hover {
+            color: #3b82f6;
+        }
+
+        .system-status {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
         }
 
         .status-indicator {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            padding: 6px 12px;
-            background: rgba(5, 150, 105, 0.2);
-            border: 1px solid rgba(5, 150, 105, 0.3);
-            border-radius: 20px;
-            font-size: 0.85rem;
-            font-weight: 500;
-            color: #059669;
-        }
-
-        .pulse-dot {
             width: 8px;
             height: 8px;
-            background: #059669;
             border-radius: 50%;
+            background: var(--success-color);
             animation: pulse 2s infinite;
         }
 
+        .status-indicator.warning {
+            background: var(--warning-color);
+        }
+
+        .status-indicator.danger {
+            background: var(--danger-color);
+        }
+
         @keyframes pulse {
-            0% { transform: scale(1); opacity: 1; }
-            50% { transform: scale(1.2); opacity: 0.7; }
-            100% { transform: scale(1); opacity: 1; }
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
         }
 
-        /* Container Enhancement */
-        .main-container {
-            padding: 30px;
-            background: var(--glass-bg);
+        /* ADVANCED METRICS HEADER */
+        .metrics-header {
+            padding: 2rem 0;
+            background: rgba(255, 255, 255, 0.02);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .metric-card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 1.5rem;
             backdrop-filter: blur(10px);
-            margin: 20px;
-            border-radius: 20px;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-            border: 1px solid rgba(255, 255, 255, 0.2);
             transition: all 0.3s ease;
-        }
-
-        .main-container.critical-mode {
-            border: 3px solid #dc2626;
-            box-shadow: 0 0 50px rgba(220, 38, 38, 0.5);
-        }
-
-        /* Dashboard Title */
-        .dashboard-title {
-            font-size: 2.5rem;
-            font-weight: 700;
-            background: linear-gradient(135deg, var(--primary-dark), var(--primary-blue));
-            background-clip: text;
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            margin-bottom: 8px;
-        }
-
-        .dashboard-subtitle {
-            color: var(--text-secondary);
-            font-size: 1.1rem;
-            font-weight: 400;
-            margin-bottom: 40px;
-        }
-
-        /* Enhanced Statistics Row */
-        .stats-row {
-            margin-bottom: 40px;
-        }
-
-        .stat-card {
-            background: rgba(255, 255, 255, 0.95);
-            border-radius: 16px;
-            padding: 25px;
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             position: relative;
             overflow: hidden;
         }
 
-        .stat-card::before {
+        .metric-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+        }
+
+        .metric-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .metric-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .metric-label {
+            color: #94a3b8;
+            font-size: 0.875rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .metric-trend {
+            font-size: 0.75rem;
+            margin-top: 0.5rem;
+        }
+
+        .trend-up {
+            color: var(--success-color);
+        }
+
+        .trend-down {
+            color: var(--danger-color);
+        }
+
+        /* MACHINE GRID SYSTEM */
+        .machines-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: 2rem;
+            padding: 2rem 0;
+        }
+
+        .machine-panel {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 0;
+            backdrop-filter: blur(20px);
+            transition: all 0.4s ease;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .machine-panel::after {
             content: '';
             position: absolute;
             top: 0;
             left: 0;
             right: 0;
             height: 4px;
+            background: linear-gradient(90deg, 
+                var(--success-color) 0%, 
+                var(--warning-color) 50%, 
+                var(--danger-color) 100%);
+            transition: all 0.3s ease;
         }
 
-        .stat-card.stat-primary::before { background: linear-gradient(90deg, var(--primary-blue), #3b82f6); }
-        .stat-card.stat-success::before { background: linear-gradient(90deg, var(--success-green), #10b981); }
-        .stat-card.stat-info::before { background: linear-gradient(90deg, #0ea5e9, #0284c7); }
-        .stat-card.stat-warning::before { background: linear-gradient(90deg, var(--warning-orange), #f59e0b); }
+        .machine-panel.status-normal::after {
+            background: var(--success-color);
+        }
 
-        .stat-card:hover {
-            transform: translateY(-8px);
+        .machine-panel.status-maintenance::after {
+            background: var(--warning-color);
+        }
+
+        .machine-panel.status-sabotage::after,
+        .machine-panel.status-shutdown::after {
+            background: var(--danger-color);
+        }
+
+        .machine-panel:hover {
+            transform: translateY(-5px);
             box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-        }
-
-        .stat-icon {
-            width: 50px;
-            height: 50px;
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.4rem;
-            color: white;
-            margin-bottom: 15px;
-        }
-
-        .stat-primary .stat-icon { background: linear-gradient(135deg, var(--primary-blue), #3b82f6); }
-        .stat-success .stat-icon { background: linear-gradient(135deg, var(--success-green), #10b981); }
-        .stat-info .stat-icon { background: linear-gradient(135deg, #0ea5e9, #0284c7); }
-        .stat-warning .stat-icon { background: linear-gradient(135deg, var(--warning-orange), #f59e0b); }
-
-        .stat-value {
-            font-size: 2.2rem;
-            font-weight: 700;
-            line-height: 1;
-            margin-bottom: 5px;
-            color: var(--text-primary);
-        }
-
-        .stat-label {
-            font-size: 0.85rem;
-            font-weight: 500;
-            color: var(--text-secondary);
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        /* Machine Grid Layout */
-        .machines-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 25px;
-            margin-bottom: 30px;
-        }
-
-        /* Professional Machine Cards */
-        .machine-card {
-            background: rgba(255, 255, 255, 0.95);
-            border-radius: 20px;
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-            overflow: hidden;
-            position: relative;
-        }
-
-        .machine-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 6px;
-            background: linear-gradient(90deg, #667eea, #764ba2);
-        }
-
-        /* CRITICAL MACHINE EFFECTS */
-        .machine-card.critical-machine {
-            border: 3px solid #dc2626;
-            animation: machineCritical 1.5s infinite;
-        }
-
-        @keyframes machineCritical {
-            0%, 100% { 
-                box-shadow: 0 0 20px rgba(220, 38, 38, 0.6);
-                transform: translateY(-5px);
-            }
-            50% { 
-                box-shadow: 0 0 40px rgba(239, 68, 68, 0.8);
-                transform: translateY(-8px);
-            }
-        }
-
-        .machine-card:hover {
-            transform: translateY(-12px);
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            border-color: rgba(255, 255, 255, 0.2);
         }
 
         .machine-header {
-            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-            padding: 20px 25px;
-            color: white;
-            position: relative;
+            padding: 1.5rem;
+            background: rgba(0, 0, 0, 0.2);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
         }
 
         .machine-title {
-            font-size: 1.2rem;
+            font-size: 1.25rem;
             font-weight: 600;
-            margin-bottom: 5px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
+            margin-bottom: 0.5rem;
+            color: #f1f5f9;
         }
 
-        .machine-subtitle {
-            font-size: 0.85rem;
-            color: rgba(255, 255, 255, 0.8);
-            margin-bottom: 12px;
+        .machine-type {
+            color: #94a3b8;
+            font-size: 0.875rem;
+            margin-bottom: 0.25rem;
         }
 
         .machine-location {
-            font-size: 0.8rem;
-            color: rgba(255, 255, 255, 0.7);
-            display: flex;
-            align-items: center;
-            gap: 5px;
+            color: #64748b;
+            font-size: 0.75rem;
         }
 
         .status-badge {
             position: absolute;
-            top: 20px;
-            right: 25px;
-            padding: 6px 12px;
+            top: 1rem;
+            right: 1rem;
+            padding: 0.375rem 0.75rem;
             border-radius: 20px;
             font-size: 0.75rem;
             font-weight: 600;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
+            letter-spacing: 0.05em;
         }
 
-        .status-normal { background: rgba(5, 150, 105, 0.2); color: #059669; border: 1px solid rgba(5, 150, 105, 0.3); }
-        .status-maintenance { background: rgba(217, 119, 6, 0.2); color: #d97706; border: 1px solid rgba(217, 119, 6, 0.3); }
-        .status-sabotage { background: rgba(220, 38, 38, 0.2); color: #dc2626; border: 1px solid rgba(220, 38, 38, 0.3); }
-        .status-shutdown { background: rgba(75, 85, 99, 0.2); color: #4b5563; border: 1px solid rgba(75, 85, 99, 0.3); }
-
-        .machine-body {
-            padding: 25px;
+        .status-normal {
+            background: rgba(16, 185, 129, 0.2);
+            color: #10b981;
+            border: 1px solid rgba(16, 185, 129, 0.3);
         }
 
-        /* Sensor Metrics Grid */
-        .sensor-metrics {
+        .status-maintenance {
+            background: rgba(245, 158, 11, 0.2);
+            color: #f59e0b;
+            border: 1px solid rgba(245, 158, 11, 0.3);
+        }
+
+        .status-sabotage,
+        .status-shutdown {
+            background: rgba(239, 68, 68, 0.2);
+            color: #ef4444;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+
+        /* REAL-TIME SENSOR DISPLAY */
+        .sensors-grid {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
-            gap: 15px;
-            margin-bottom: 20px;
+            gap: 1rem;
+            padding: 1.5rem;
         }
 
         .sensor-item {
-            background: #f8fafc;
-            border-radius: 12px;
-            padding: 15px;
-            border: 2px solid #e2e8f0;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 1rem;
+            text-align: center;
             transition: all 0.3s ease;
             position: relative;
-            text-align: center;
         }
 
-        .sensor-item.normal {
-            border-color: var(--success-green);
-            background: rgba(5, 150, 105, 0.05);
+        .sensor-item:hover {
+            background: rgba(255, 255, 255, 0.05);
+            transform: scale(1.02);
         }
 
-        .sensor-item.warning {
-            border-color: var(--warning-orange);
-            background: rgba(217, 119, 6, 0.05);
-        }
-
-        .sensor-item.critical {
-            border-color: var(--danger-red);
-            background: rgba(220, 38, 38, 0.05);
-            animation: pulse-critical 2s infinite;
-        }
-
-        @keyframes pulse-critical {
-            0%, 100% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.4); }
-            50% { box-shadow: 0 0 0 8px rgba(220, 38, 38, 0); }
-        }
-
-        .sensor-label {
+        .sensor-name {
+            color: #94a3b8;
             font-size: 0.75rem;
-            font-weight: 600;
             text-transform: uppercase;
-            color: var(--text-secondary);
-            letter-spacing: 0.5px;
-            margin-bottom: 8px;
+            margin-bottom: 0.5rem;
+            letter-spacing: 0.05em;
         }
 
         .sensor-value {
-            font-size: 1.3rem;
+            font-size: 1.5rem;
             font-weight: 700;
-            margin-bottom: 5px;
+            margin-bottom: 0.25rem;
+        }
+
+        .sensor-unit {
+            font-size: 0.875rem;
+            color: #64748b;
+        }
+
+        .sensor-normal {
+            color: var(--success-color);
+        }
+
+        .sensor-warning {
+            color: var(--warning-color);
+        }
+
+        .sensor-anomaly {
+            color: var(--danger-color);
+            animation: glow 2s infinite alternate;
+        }
+
+        @keyframes glow {
+            from { text-shadow: 0 0 5px currentColor; }
+            to { text-shadow: 0 0 20px currentColor; }
+        }
+
+        .anomaly-indicator {
+            position: absolute;
+            top: 0.5rem;
+            right: 0.5rem;
+            color: var(--danger-color);
+            animation: bounce 1s infinite;
+        }
+
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+            40% { transform: translateY(-3px); }
+            60% { transform: translateY(-2px); }
+        }
+
+        /* HEALTH MONITORING SECTION */
+        .health-section {
+            padding: 1.5rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(0, 0, 0, 0.1);
+        }
+
+        .health-overview {
             display: flex;
             align-items: center;
-            justify-content: center;
-            gap: 6px;
+            justify-content: space-between;
+            margin-bottom: 1rem;
         }
 
-        .sensor-value.normal { color: var(--success-green); }
-        .sensor-value.warning { color: var(--warning-orange); }
-        .sensor-value.critical { color: var(--danger-red); }
-
-        .sensor-score {
-            font-size: 0.7rem;
-            color: var(--text-secondary);
+        .health-score {
+            font-size: 2rem;
+            font-weight: 700;
         }
 
-        /* Mini Chart Container */
-        .mini-chart {
-            height: 120px;
-            background: rgba(248, 250, 252, 0.8);
-            border-radius: 12px;
-            margin-bottom: 20px;
-            padding: 5px;
-            border: 1px solid #e2e8f0;
+        .health-excellent {
+            color: var(--success-color);
         }
 
-        /* Enhanced Control Buttons */
-        .control-buttons {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 8px;
+        .health-good {
+            color: #22c55e;
         }
 
-        .control-btn {
-            padding: 10px;
-            border: none;
-            border-radius: 10px;
-            font-size: 0.75rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.3px;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            position: relative;
+        .health-warning {
+            color: var(--warning-color);
+        }
+
+        .health-critical {
+            color: var(--danger-color);
+        }
+
+        .health-bar {
+            width: 100%;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
             overflow: hidden;
-            cursor: pointer;
+            margin: 1rem 0;
         }
 
-        .control-btn:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
+        .health-progress {
+            height: 100%;
+            transition: width 0.8s ease;
+            background: linear-gradient(90deg, var(--danger-color), var(--warning-color), var(--success-color));
         }
 
-        .control-btn:hover:not(:disabled) {
-            transform: translateY(-2px);
+        .sensor-health-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+
+        .sensor-health-item {
+            text-align: center;
+            padding: 0.5rem;
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: 6px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .sensor-health-name {
+            font-size: 0.7rem;
+            color: #94a3b8;
+            margin-bottom: 0.25rem;
+        }
+
+        .sensor-health-value {
+            font-weight: 600;
+            font-size: 0.875rem;
+        }
+
+        /* CONTROL PANEL */
+        .control-panel {
+            padding: 1.5rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(0, 0, 0, 0.15);
+        }
+
+        .control-section {
+            margin-bottom: 1.5rem;
+        }
+
+        .control-label {
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: #e2e8f0;
+            margin-bottom: 0.75rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-machine {
+            padding: 0.5rem 1rem;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 6px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+            margin: 0.25rem;
         }
 
         .btn-normal {
-            background: linear-gradient(135deg, var(--success-green), #10b981);
-            color: white;
-            box-shadow: 0 4px 15px rgba(5, 150, 105, 0.3);
+            background: rgba(16, 185, 129, 0.1);
+            color: #10b981;
+            border-color: rgba(16, 185, 129, 0.3);
+        }
+
+        .btn-normal:hover {
+            background: rgba(16, 185, 129, 0.2);
+            transform: translateY(-1px);
         }
 
         .btn-maintenance {
-            background: linear-gradient(135deg, var(--warning-orange), #f59e0b);
-            color: white;
-            box-shadow: 0 4px 15px rgba(217, 119, 6, 0.3);
+            background: rgba(245, 158, 11, 0.1);
+            color: #f59e0b;
+            border-color: rgba(245, 158, 11, 0.3);
+        }
+
+        .btn-maintenance:hover {
+            background: rgba(245, 158, 11, 0.2);
+            transform: translateY(-1px);
         }
 
         .btn-sabotage {
-            background: linear-gradient(135deg, var(--danger-red), #ef4444);
-            color: white;
-            box-shadow: 0 4px 15px rgba(220, 38, 38, 0.3);
+            background: rgba(239, 68, 68, 0.1);
+            color: #ef4444;
+            border-color: rgba(239, 68, 68, 0.3);
         }
 
-        /* EMERGENCY SHUTDOWN BUTTON */
-        .btn-shutdown {
-            background: linear-gradient(135deg, #4b5563, #374151);
-            color: white;
-            box-shadow: 0 4px 15px rgba(75, 85, 99, 0.3);
+        .btn-sabotage:hover {
+            background: rgba(239, 68, 68, 0.2);
+            transform: translateY(-1px);
         }
 
-        .btn-shutdown.emergency {
-            background: linear-gradient(135deg, #dc2626, #b91c1c);
-            animation: emergencyPulse 1s infinite;
+        .sensor-controls {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+            gap: 0.5rem;
+            margin-top: 0.75rem;
         }
 
-        @keyframes emergencyPulse {
-            0%, 100% { 
-                box-shadow: 0 4px 15px rgba(220, 38, 38, 0.5);
-                transform: scale(1);
-            }
-            50% { 
-                box-shadow: 0 6px 25px rgba(220, 38, 38, 0.8);
-                transform: scale(1.05);
-            }
+        .btn-sensor {
+            padding: 0.375rem 0.5rem;
+            font-size: 0.75rem;
+            background: rgba(59, 130, 246, 0.1);
+            color: #60a5fa;
+            border: 1px solid rgba(59, 130, 246, 0.2);
+            border-radius: 4px;
+            transition: all 0.3s ease;
         }
 
-        /* Alert Banner */
-        .alert-banner {
-            position: fixed;
-            top: 70px;
-            left: 0;
-            right: 0;
-            z-index: 999;
-            background: linear-gradient(135deg, var(--danger-red), #dc2626);
-            color: white;
-            padding: 15px;
+        .btn-sensor:hover {
+            background: rgba(59, 130, 246, 0.2);
+            transform: scale(1.05);
+        }
+
+        /* ACTION BUTTONS */
+        .action-buttons {
+            display: flex;
+            gap: 0.75rem;
+            margin-top: 1rem;
+        }
+
+        .btn-action {
+            flex: 1;
+            padding: 0.75rem;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.05);
+            color: #e2e8f0;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        .btn-action:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateY(-2px);
+            color: #f1f5f9;
+        }
+
+        .btn-primary {
+            background: rgba(59, 130, 246, 0.2);
+            border-color: rgba(59, 130, 246, 0.4);
+            color: #60a5fa;
+        }
+
+        .btn-info {
+            background: rgba(14, 165, 233, 0.2);
+            border-color: rgba(14, 165, 233, 0.4);
+            color: #0ea5e9;
+        }
+
+        /* MODALS */
+        .modal-content {
+            background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #e2e8f0;
+        }
+
+        .modal-header {
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(0, 0, 0, 0.2);
+        }
+
+        .modal-body {
+            max-height: 70vh;
+            overflow-y: auto;
+        }
+
+        /* CHARTS */
+        .chart-container {
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: 8px;
+            padding: 1rem;
+            margin: 1rem 0;
+        }
+
+        .chart-title {
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: #94a3b8;
+            margin-bottom: 1rem;
             text-align: center;
-            border: none;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-            animation: slideDown 0.5s ease;
         }
 
-        @keyframes slideDown {
-            from { transform: translateY(-100%); opacity: 0; }
-            to { transform: translateY(0); opacity: 1; }
+        /* LOADING STATES */
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            border-top-color: #60a5fa;
+            animation: spin 1s ease-in-out infinite;
         }
 
-        /* Responsive Design */
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* NOTIFICATIONS */
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+            max-width: 400px;
+            padding: 1rem;
+            border-radius: 8px;
+            backdrop-filter: blur(10px);
+            box-shadow: var(--shadow-lg);
+            animation: slideIn 0.3s ease;
+        }
+
+        .notification-success {
+            background: rgba(16, 185, 129, 0.9);
+            border: 1px solid rgba(16, 185, 129, 1);
+        }
+
+        .notification-warning {
+            background: rgba(245, 158, 11, 0.9);
+            border: 1px solid rgba(245, 158, 11, 1);
+        }
+
+        .notification-error {
+            background: rgba(239, 68, 68, 0.9);
+            border: 1px solid rgba(239, 68, 68, 1);
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        /* RESPONSIVE DESIGN */
         @media (max-width: 768px) {
             .machines-grid {
                 grid-template-columns: 1fr;
-                gap: 20px;
+                gap: 1rem;
+                padding: 1rem 0;
             }
 
-            .main-container {
-                margin: 10px;
-                padding: 20px;
+            .sensors-grid {
+                grid-template-columns: 1fr;
+                gap: 0.5rem;
+                padding: 1rem;
             }
 
-            .control-buttons {
-                grid-template-columns: repeat(2, 1fr);
+            .metric-card {
+                padding: 1rem;
+            }
+
+            .metric-value {
+                font-size: 2rem;
+            }
+
+            .machine-panel {
+                margin-bottom: 1rem;
             }
         }
 
-        /* Loading States */
-        .loading-shimmer {
-            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
-            background-size: 400% 100%;
-            animation: shimmer 1.5s infinite;
+        /* ANIMATIONS */
+        .fade-in {
+            animation: fadeIn 0.6s ease;
         }
 
-        @keyframes shimmer {
-            0% { background-position: -468px 0; }
-            100% { background-position: 468px 0; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
-        /* CRITICAL OVERLAY */
-        .critical-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(220, 38, 38, 0.1);
-            pointer-events: none;
-            z-index: 10;
-            opacity: 0;
-            transition: opacity 0.3s ease;
+        .slide-up {
+            animation: slideUp 0.4s ease;
         }
 
-        .critical-overlay.active {
-            opacity: 1;
-            animation: overlayPulse 2s infinite;
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
-        @keyframes overlayPulse {
-            0%, 100% { background: rgba(220, 38, 38, 0.05); }
-            50% { background: rgba(220, 38, 38, 0.15); }
+        /* CUSTOM SCROLLBAR */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.3);
         }
     </style>
 </head>
 <body>
-    <!-- Critical Overlay -->
-    <div id="critical-overlay" class="critical-overlay"></div>
-
-    <!-- Professional Header -->
-    <header class="main-header">
-        <div class="container-fluid">
-            <div class="d-flex justify-content-between align-items-center py-3">
-                <div class="brand-logo">
-                    <i class="fas fa-industry me-2"></i>
-                    <strong>Industrial Predictive Maintenance</strong>
+    <!-- PROFESSIONAL NAVIGATION -->
+    <nav class="top-nav">
+        <div class="container-fluid px-4">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <a href="/" class="nav-brand">
+                        <i class="fas fa-industry me-2"></i>
+                        Industrial Plant Alpha
+                    </a>
                 </div>
-
-                <div class="d-flex align-items-center gap-4">
-                    <div class="status-indicator">
-                        <div class="pulse-dot"></div>
-                        <span>System Online</span>
-                    </div>
-
-                    <div class="text-white d-flex align-items-center gap-3">
-                        <div class="d-flex align-items-center gap-2">
-                            <i class="fas fa-bell"></i>
-                            <span class="badge bg-warning text-dark" id="alert-count">0</span>
+                <div class="col-md-6">
+                    <div class="system-status justify-content-end">
+                        <div class="status-indicator" id="systemStatus"></div>
+                        <span class="text-sm">System Online</span>
+                        <div class="ms-3">
+                            <i class="fas fa-clock me-1"></i>
+                            <span id="currentTime"></span>
                         </div>
-
-                        <div class="d-flex align-items-center gap-2">
-                            <i class="fas fa-clock"></i>
-                            <span id="current-time"></span>
+                        <div class="ms-3">
+                            <i class="fas fa-user-shield me-1"></i>
+                            <span>Mission Control</span>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-    </header>
+    </nav>
 
-    <!-- Critical Alert Banner -->
-    <div id="critical-alert-banner" class="alert-banner d-none" role="alert">
-        <div class="container-fluid">
-            <h6 class="mb-1">
-                <i class="fas fa-exclamation-triangle me-2"></i>
-                <strong>🚨 EMERGENCY CRITICAL ALERT - IMMEDIATE ACTION REQUIRED</strong>
-            </h6>
-            <p class="mb-0" id="critical-alert-message">Critical anomaly detected in industrial equipment.</p>
+    <!-- SYSTEM METRICS HEADER -->
+    <div class="metrics-header">
+        <div class="container-fluid px-4">
+            <div class="row g-3">
+                <div class="col-6 col-md-3">
+                    <div class="metric-card fade-in">
+                        <div class="metric-value" id="totalMachines">{{ machines|length }}</div>
+                        <div class="metric-label">Active Machines</div>
+                        <div class="metric-trend trend-up">
+                            <i class="fas fa-arrow-up me-1"></i>
+                            100% Online
+                        </div>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3">
+                    <div class="metric-card fade-in" style="animation-delay: 0.1s;">
+                        <div class="metric-value" id="totalSensors">16</div>
+                        <div class="metric-label">Sensor Network</div>
+                        <div class="metric-trend trend-up">
+                            <i class="fas fa-chart-line me-1"></i>
+                            <span id="sensorUptime">99.7%</span> Uptime
+                        </div>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3">
+                    <div class="metric-card fade-in" style="animation-delay: 0.2s;">
+                        <div class="metric-value" id="systemHealth">94</div>
+                        <div class="metric-label">System Health</div>
+                        <div class="metric-trend">
+                            <i class="fas fa-heartbeat me-1"></i>
+                            <span class="trend-up">Excellent</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3">
+                    <div class="metric-card fade-in" style="animation-delay: 0.3s;">
+                        <div class="metric-value" id="activeAlerts">0</div>
+                        <div class="metric-label">Active Alerts</div>
+                        <div class="metric-trend">
+                            <i class="fas fa-shield-check me-1"></i>
+                            <span class="trend-up">All Clear</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
-    <!-- Main Dashboard Content -->
-    <div class="main-container" id="main-container">
-        <!-- Dashboard Header -->
-        <div class="text-center mb-5">
-            <h1 class="dashboard-title">
-                <i class="fas fa-tachometer-alt me-3"></i>
-                Industrial Control Center
-            </h1>
-            <p class="dashboard-subtitle">
-                Real-time monitoring and predictive maintenance for chemical & biotechnology processes
-            </p>
-        </div>
-
-        <!-- Enhanced Statistics Overview -->
-        <div class="row stats-row">
-            <div class="col-lg-3 col-md-6 mb-3">
-                <div class="stat-card stat-primary">
-                    <div class="stat-icon">
-                        <i class="fas fa-industry"></i>
-                    </div>
-                    <div class="stat-value" id="total-machines">{{ machines|length }}</div>
-                    <div class="stat-label">Active Machines</div>
-                </div>
-            </div>
-
-            <div class="col-lg-3 col-md-6 mb-3">
-                <div class="stat-card stat-success">
-                    <div class="stat-icon">
-                        <i class="fas fa-check-circle"></i>
-                    </div>
-                    <div class="stat-value" id="operational-count">-</div>
-                    <div class="stat-label">Operational Units</div>
-                </div>
-            </div>
-
-            <div class="col-lg-3 col-md-6 mb-3">
-                <div class="stat-card stat-info">
-                    <div class="stat-icon">
-                        <i class="fas fa-stopwatch"></i>
-                    </div>
-                    <div class="stat-value" id="total-runtime">-</div>
-                    <div class="stat-label">System Uptime (hrs)</div>
-                </div>
-            </div>
-
-            <div class="col-lg-3 col-md-6 mb-3">
-                <div class="stat-card stat-warning">
-                    <div class="stat-icon">
-                        <i class="fas fa-chart-line"></i>
-                    </div>
-                    <div class="stat-value" id="efficiency-rate">-</div>
-                    <div class="stat-label">Overall Efficiency</div>
-                </div>
-            </div>
-        </div>
-
-        <!-- 2x2 Machine Grid -->
-        <div class="machines-grid" id="machines-grid">
-            <!-- Machines will be dynamically loaded here -->
+    <!-- MAIN DASHBOARD CONTENT -->
+    <div class="container-fluid px-4">
+        <div class="machines-grid" id="machinesGrid">
             {% for machine in machines %}
-            <div class="machine-card" data-machine-id="{{ machine.id }}" id="machine-card-{{ machine.id }}">
+            <div class="machine-panel status-{{ machine.status }} slide-up" 
+                 style="animation-delay: {{ loop.index0 * 0.1 }}s;" 
+                 id="machine-panel-{{ machine.id }}">
+                
+                <!-- MACHINE HEADER -->
                 <div class="machine-header">
-                    <div class="machine-title">
-                        <i class="fas fa-cog"></i>
-                        {{ machine.name }}
-                    </div>
-                    <div class="machine-subtitle">{{ machine.description }}</div>
+                    <div class="machine-title">{{ machine.name }}</div>
+                    <div class="machine-type">{{ machine.machine_type }}</div>
                     <div class="machine-location">
-                        <i class="fas fa-map-marker-alt"></i>
+                        <i class="fas fa-map-marker-alt me-1"></i>
                         {{ machine.location }}
                     </div>
-                    <span class="status-badge status-normal" id="status-{{ machine.id }}">
-                        {{ machine.status.upper() }}
-                    </span>
+                    <div class="status-badge status-{{ machine.status }}">
+                        <i class="fas fa-{% if machine.status == 'normal' %}check-circle{% elif machine.status == 'maintenance' %}wrench{% elif machine.status == 'sabotage' %}exclamation-triangle{% else %}power-off{% endif %} me-1"></i>
+                        {{ machine.status|upper }}
+                    </div>
                 </div>
 
-                <div class="machine-body">
-                    <!-- Sensor Metrics Grid -->
-                    <div class="sensor-metrics" id="sensors-{{ machine.id }}">
-                        <div class="sensor-item loading-shimmer">
-                            <div class="sensor-label">Loading...</div>
-                            <div class="sensor-value">--</div>
+                <!-- REAL-TIME SENSORS -->
+                <div class="sensors-grid" id="sensors-{{ machine.id }}">
+                    <!-- Sensors will be populated by JavaScript -->
+                </div>
+
+                <!-- HEALTH MONITORING -->
+                <div class="health-section">
+                    <div class="health-overview">
+                        <div>
+                            <div class="health-score health-excellent" id="health-score-{{ machine.id }}">95%</div>
+                            <div style="font-size: 0.75rem; color: #94a3b8;">Overall Health</div>
                         </div>
-                        <div class="sensor-item loading-shimmer">
-                            <div class="sensor-label">Loading...</div>
-                            <div class="sensor-value">--</div>
+                        <div>
+                            <i class="fas fa-heartbeat fa-2x" style="color: #10b981;"></i>
                         </div>
-                        <div class="sensor-item loading-shimmer">
-                            <div class="sensor-label">Loading...</div>
-                            <div class="sensor-value">--</div>
+                    </div>
+                    <div class="health-bar">
+                        <div class="health-progress" id="health-progress-{{ machine.id }}" style="width: 95%;"></div>
+                    </div>
+                    <div class="sensor-health-grid" id="sensor-health-{{ machine.id }}">
+                        <!-- Individual sensor health will be populated here -->
+                    </div>
+                </div>
+
+                <!-- CONTROL PANEL -->
+                <div class="control-panel">
+                    <div class="control-section">
+                        <div class="control-label">
+                            <i class="fas fa-cogs"></i>
+                            Machine Controls
                         </div>
-                        <div class="sensor-item loading-shimmer">
-                            <div class="sensor-label">Loading...</div>
-                            <div class="sensor-value">--</div>
+                        <div class="d-flex flex-wrap">
+                            <button class="btn-machine btn-normal" onclick="setMachineMode({{ machine.id }}, 'normal')">
+                                <i class="fas fa-play me-1"></i>Normal
+                            </button>
+                            <button class="btn-machine btn-maintenance" onclick="setMachineMode({{ machine.id }}, 'maintenance')">
+                                <i class="fas fa-wrench me-1"></i>Maintenance
+                            </button>
+                            <button class="btn-machine btn-sabotage" onclick="setMachineMode({{ machine.id }}, 'sabotage')">
+                                <i class="fas fa-exclamation-triangle me-1"></i>Emergency
+                            </button>
                         </div>
                     </div>
 
-                    <!-- Mini Chart -->
-                    <div class="mini-chart" id="chart-{{ machine.id }}"></div>
+                    <div class="control-section">
+                        <div class="control-label">
+                            <i class="fas fa-microchip"></i>
+                            Individual Sensors
+                        </div>
+                        <div class="sensor-controls" id="sensor-controls-{{ machine.id }}">
+                            <!-- Individual sensor controls will be populated here -->
+                        </div>
+                    </div>
 
-                    <!-- Enhanced Control Buttons -->
-                    <div class="control-buttons" id="controls-{{ machine.id }}">
-                        <button class="control-btn btn-normal" onclick="setMachineMode({{ machine.id }}, 'normal')" id="btn-normal-{{ machine.id }}">
-                            <i class="fas fa-play me-1"></i>Start
+                    <div class="action-buttons">
+                        <button class="btn-action btn-primary" onclick="showHealthAnalysis({{ machine.id }}, '{{ machine.name }}')">
+                            <i class="fas fa-chart-line me-2"></i>Health Analysis
                         </button>
-                        <button class="control-btn btn-maintenance" onclick="setMachineMode({{ machine.id }}, 'maintenance')" id="btn-maintenance-{{ machine.id }}">
-                            <i class="fas fa-wrench me-1"></i>Maintenance
-                        </button>
-                        <button class="control-btn btn-sabotage" onclick="setMachineMode({{ machine.id }}, 'sabotage')" id="btn-sabotage-{{ machine.id }}">
-                            <i class="fas fa-exclamation-triangle me-1"></i>Critical
-                        </button>
-                        <button class="control-btn btn-shutdown" onclick="emergencyShutdown({{ machine.id }})" id="btn-shutdown-{{ machine.id }}">
-                            <i class="fas fa-power-off me-1"></i>Shutdown
-                        </button>
+                        <!-- <button class="btn-action btn-info" onclick="showLiveCharts({{ machine.id }}, '{{ machine.name }}')">
+                            <i class="fas fa-chart-area me-2"></i>Live Charts
+                        </button> -->
                     </div>
                 </div>
             </div>
@@ -709,373 +843,287 @@
         </div>
     </div>
 
-    <!-- Bootstrap JS -->
+    <!-- ENHANCED HEALTH ANALYSIS MODAL -->
+    <div class="modal fade" id="healthModal" tabindex="-1">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fas fa-heartbeat me-2"></i>
+                        Comprehensive Health Analysis
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="healthModalBody">
+                    <div class="text-center py-5">
+                        <div class="loading-spinner"></div>
+                        <p class="mt-3">Analyzing sensor health and system performance...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- LIVE CHARTS MODAL -->
+    <div class="modal fade" id="chartsModal" tabindex="-1">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fas fa-chart-area me-2"></i>
+                        Real-Time Sensor Analytics
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="chartsModalBody">
+                    <div class="text-center py-5">
+                        <div class="loading-spinner"></div>
+                        <p class="mt-3">Loading real-time analytics dashboard...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-
     <script>
-        // Global variables
-        let machines = [];
-        let chartData = {};
-        let miniCharts = {};
-        let criticalMachines = new Set();
-        let shutdownMachines = new Set();
-        let systemStartTime = new Date();
-
-        // Enhanced Chart Colors for Different Lines
-        const CHART_COLORS = [
-            '#ff6b6b',  // Red
-            '#4ecdc4',  // Teal  
-            '#45b7d1',  // Blue
-            '#f9ca24',  // Yellow
-            '#6c5ce7',  // Purple
-            '#a0e7e5',  // Light teal
-            '#ffeaa7',  // Light yellow
-            '#fd79a8'   // Pink
-        ];
-
-        // Machine Configurations
-        const MACHINE_CONFIGS = {
-            "Chemical Reactor": {
-                icon: "fas fa-flask",
-                sensors: ["temperature", "pressure", "flow_rate", "level"]
-            },
-            "Biotech Fermenter": {
-                icon: "fas fa-seedling", 
-                sensors: ["temperature", "ph", "dissolved_oxygen", "agitation"]
-            },
-            "Distillation Column": {
-                icon: "fas fa-filter",
-                sensors: ["temperature_top", "temperature_bottom", "pressure", "reflux_ratio"]
-            },
-            "Heat Exchanger": {
-                icon: "fas fa-fire",
-                sensors: ["inlet_temp", "outlet_temp", "pressure_drop", "flow_rate"]
-            }
+        // GLOBAL VARIABLES
+        let updateIntervals = {};
+        let liveCharts = {};
+        let systemMetrics = {
+            totalMachines: {{ machines|length }},
+            activeSensors: 0,
+            systemHealth: 95,
+            activeAlerts: 0
         };
 
-        // Initialize dashboard
+        // MACHINE CONFIGURATION
+        const MACHINE_SENSORS = {
+            'Chemical Reactor': [
+                { type: 'temperature', name: 'Temperature', unit: '°C', icon: 'fa-thermometer-half' },
+                { type: 'pressure', name: 'Pressure', unit: 'bar', icon: 'fa-gauge-high' },
+                { type: 'flow_rate', name: 'Flow Rate', unit: 'L/min', icon: 'fa-water' },
+                { type: 'level', name: 'Level', unit: 'mm', icon: 'fa-fill-drip' }
+            ],
+            'Biotech Fermenter': [
+                { type: 'temperature', name: 'Temperature', unit: '°C', icon: 'fa-thermometer-half' },
+                { type: 'ph', name: 'pH Level', unit: 'pH', icon: 'fa-flask' },
+                { type: 'dissolved_oxygen', name: 'Dissolved O₂', unit: '%', icon: 'fa-wind' },
+                { type: 'agitation', name: 'Agitation', unit: 'RPM', icon: 'fa-rotate' }
+            ],
+            'Distillation Column': [
+                { type: 'temperature_top', name: 'Top Temp', unit: '°C', icon: 'fa-thermometer-half' },
+                { type: 'temperature_bottom', name: 'Bottom Temp', unit: '°C', icon: 'fa-thermometer-full' },
+                { type: 'pressure', name: 'Pressure', unit: 'bar', icon: 'fa-gauge-high' },
+                { type: 'reflux_ratio', name: 'Reflux Ratio', unit: 'ratio', icon: 'fa-arrows-rotate' }
+            ],
+            'Heat Exchanger': [
+                { type: 'inlet_temp', name: 'Inlet Temp', unit: '°C', icon: 'fa-thermometer-quarter' },
+                { type: 'outlet_temp', name: 'Outlet Temp', unit: '°C', icon: 'fa-thermometer-three-quarters' },
+                { type: 'pressure_drop', name: 'Pressure Drop', unit: 'bar', icon: 'fa-gauge' },
+                { type: 'flow_rate', name: 'Flow Rate', unit: 'L/min', icon: 'fa-water' }
+            ]
+        };
+
+        // INITIALIZE DASHBOARD
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeDashboard();
+            startSystemUpdates();
+            updateSystemTime();
+        });
+
         function initializeDashboard() {
-            updateTime();
-            loadMachines();
-
-            // Set update intervals
-            setInterval(updateTime, 1000);
-            setInterval(() => {
-                updateMachineData();
-                updateStatistics();
-            }, 5000);
-            setInterval(checkAlerts, 8000);
+            console.log('🚀 Initializing Industrial Dashboard...');
+            
+            {% for machine in machines %}
+            initializeMachine({{ machine.id }}, '{{ machine.machine_type }}', '{{ machine.name }}');
+            {% endfor %}
+            
+            // Add staggered loading animation
+            document.querySelectorAll('.machine-panel').forEach((panel, index) => {
+                setTimeout(() => {
+                    panel.style.opacity = '1';
+                }, index * 200);
+            });
         }
 
-        function updateTime() {
-            document.getElementById('current-time').textContent = new Date().toLocaleTimeString();
+        function initializeMachine(machineId, machineType, machineName) {
+            // Setup sensor controls
+            setupSensorControls(machineId, machineType);
+            
+            // Start live data updates
+            startMachineLiveUpdates(machineId);
+            
+            // Initialize health monitoring
+            updateMachineHealth(machineId);
         }
 
-        function loadMachines() {
-            fetch('/api/machines')
+        function setupSensorControls(machineId, machineType) {
+            const sensors = MACHINE_SENSORS[machineType] || [];
+            const controlsContainer = document.getElementById(`sensor-controls-${machineId}`);
+            
+            controlsContainer.innerHTML = sensors.map(sensor => `
+                <button class="btn-sensor" onclick="setSensorMaintenance(${machineId}, '${sensor.type}')">
+                    <i class="fas ${sensor.icon} me-1"></i>
+                    ${sensor.name}
+                </button>
+            `).join('');
+        }
+
+        function startMachineLiveUpdates(machineId) {
+            // Update every 2 seconds for real-time feel
+            updateIntervals[machineId] = setInterval(() => {
+                updateMachineLiveData(machineId);
+                updateMachineHealth(machineId);
+            }, 2000);
+            
+            // Initial load
+            updateMachineLiveData(machineId);
+        }
+
+        function updateMachineLiveData(machineId) {
+            fetch(`/api/machine/${machineId}/latest`)
                 .then(response => response.json())
                 .then(data => {
-                    machines = data;
-                    console.log('✅ Loaded machines:', machines.length);
-
-                    document.getElementById('total-machines').textContent = machines.length;
-
-                    initializeCharts();
-                    updateMachineData();
-                    updateStatistics();
+                    displayLiveSensorData(machineId, data.readings);
+                    updateSystemMetrics();
                 })
                 .catch(error => {
-                    console.error('❌ Error loading machines:', error);
+                    console.error('Error fetching live data:', error);
+                    showNotification('Connection lost to sensor network', 'error');
                 });
         }
 
-        function initializeCharts() {
-            machines.forEach((machine, machineIndex) => {
-                const config = MACHINE_CONFIGS[machine.machine_type];
-                if (!config) return;
-
-                // Initialize chart data storage
-                chartData[machine.id] = {};
-                config.sensors.forEach(sensor => {
-                    chartData[machine.id][sensor] = { x: [], y: [], anomalies: [] };
-                });
-
-                // Create mini chart with different colors for each line
-                const traces = config.sensors.map((sensor, index) => ({
-                    x: [], y: [], type: 'scatter', mode: 'lines',
-                    name: sensor.replace('_', ' ').toUpperCase(),
-                    line: { 
-                        width: 3, 
-                        color: CHART_COLORS[index % CHART_COLORS.length]
-                    }
-                }));
-
-                const layout = {
-                    margin: { l: 25, r: 25, t: 15, b: 25 },
-                    showlegend: false,
-                    xaxis: { visible: false },
-                    yaxis: { visible: false },
-                    plot_bgcolor: 'rgba(0,0,0,0)',
-                    paper_bgcolor: 'rgba(0,0,0,0)'
-                };
-
-                Plotly.newPlot(`chart-${machine.id}`, traces, layout, {
-                    responsive: true,
-                    displayModeBar: false
-                });
-
-                console.log(`📊 Colorful chart initialized for ${machine.name}`);
-            });
-        }
-
-        function updateMachineData() {
-            machines.forEach(machine => {
-                if (shutdownMachines.has(machine.id)) {
-                    return; // Skip updates for shutdown machines
-                }
-
-                fetch(`/api/machine/${machine.id}/latest`)
-                    .then(response => response.json())
-                    .then(data => {
-                        updateMachineCard(machine.id, data);
-                        updateMiniChart(machine.id, data);
-                        checkCriticalCondition(machine.id, data);
-                    })
-                    .catch(error => console.error('Error:', error));
-            });
-        }
-
-        function updateMachineCard(machineId, data) {
-            const machine = data.machine;
-            const readings = data.readings;
-
-            // Update status badge
-            const statusBadge = document.getElementById(`status-${machineId}`);
-            if (statusBadge && !shutdownMachines.has(machineId)) {
-                statusBadge.textContent = machine.status.toUpperCase();
-                statusBadge.className = `status-badge status-${machine.status}`;
-            }
-
-            // Update sensor grid
-            const sensorsGrid = document.getElementById(`sensors-${machineId}`);
-            if (sensorsGrid && Object.keys(readings).length > 0) {
-                const sensorEntries = Object.entries(readings).slice(0, 4);
-
-                sensorsGrid.innerHTML = sensorEntries.map(([sensorType, reading]) => {
-                    const status = reading.is_anomaly ? (reading.anomaly_score > 0.8 ? 'critical' : 'warning') : 'normal';
-                    const icon = reading.is_anomaly ? 
-                        (reading.anomaly_score > 0.8 ? 'fa-exclamation-triangle' : 'fa-exclamation-circle') : 
-                        'fa-check-circle';
-
-                    return `
-                        <div class="sensor-item ${status}">
-                            <div class="sensor-label">${sensorType.replace('_', ' ')}</div>
-                            <div class="sensor-value ${status}">
-                                <i class="fas ${icon}"></i>
-                                ${reading.value} ${reading.unit}
-                            </div>
-                            <div class="sensor-score">${(reading.anomaly_score * 100).toFixed(1)}%</div>
-                        </div>
-                    `;
-                }).join('');
-            }
-
-            // Update control buttons based on machine state
-            updateControlButtons(machineId, machine.status);
-        }
-
-        function updateMiniChart(machineId, data) {
-            if (!chartData[machineId] || !data.readings) return;
-
-            const currentTime = new Date(data.timestamp);
-            const readings = data.readings;
-
-            // Update chart data
+        function displayLiveSensorData(machineId, readings) {
+            const sensorsContainer = document.getElementById(`sensors-${machineId}`);
+            if (!sensorsContainer || !readings) return;
+            
+            let html = '';
+            let anomalyCount = 0;
+            
             Object.entries(readings).forEach(([sensorType, reading]) => {
-                if (chartData[machineId][sensorType]) {
-                    chartData[machineId][sensorType].x.push(currentTime);
-                    chartData[machineId][sensorType].y.push(reading.value);
-                    chartData[machineId][sensorType].anomalies.push(reading.is_anomaly);
-
-                    // Keep only last 20 points for mini charts
-                    if (chartData[machineId][sensorType].x.length > 20) {
-                        chartData[machineId][sensorType].x.shift();
-                        chartData[machineId][sensorType].y.shift();
-                        chartData[machineId][sensorType].anomalies.shift();
-                    }
-                }
-            });
-
-            // Update Plotly mini chart with colors
-            const config = MACHINE_CONFIGS[machines.find(m => m.id === machineId)?.machine_type];
-            if (!config) return;
-
-            const traces = config.sensors.map((sensor, index) => {
-                const data = chartData[machineId][sensor];
-                return {
-                    x: data.x,
-                    y: data.y,
-                    type: 'scatter',
-                    mode: 'lines',
-                    line: { 
-                        width: 3,
-                        color: data.anomalies.some(a => a) ? '#dc2626' : CHART_COLORS[index % CHART_COLORS.length]
-                    }
-                };
-            });
-
-            if (traces.some(t => t.x.length > 0)) {
-                Plotly.restyle(`chart-${machineId}`, {
-                    x: traces.map(t => t.x),
-                    y: traces.map(t => t.y),
-                    'line.color': traces.map(t => t.line.color)
-                });
-            }
-        }
-
-        function updateControlButtons(machineId, status) {
-            const isShutdown = shutdownMachines.has(machineId);
-
-            const normalBtn = document.getElementById(`btn-normal-${machineId}`);
-            const maintenanceBtn = document.getElementById(`btn-maintenance-${machineId}`);
-            const sabotageBtn = document.getElementById(`btn-sabotage-${machineId}`);
-            const shutdownBtn = document.getElementById(`btn-shutdown-${machineId}`);
-
-            if (isShutdown) {
-                // Machine is shutdown - only allow start
-                normalBtn.disabled = false;
-                maintenanceBtn.disabled = true;
-                sabotageBtn.disabled = true;
-                shutdownBtn.disabled = true;
-                shutdownBtn.classList.remove('emergency');
-            } else {
-                // Machine is running - allow all controls
-                normalBtn.disabled = false;
-                maintenanceBtn.disabled = false;
-                sabotageBtn.disabled = false;
-                shutdownBtn.disabled = false;
-
-                if (status === 'sabotage') {
-                    shutdownBtn.classList.add('emergency');
-                } else {
-                    shutdownBtn.classList.remove('emergency');
-                }
-            }
-        }
-
-        // CRITICAL CONDITION CHECKER
-        function checkCriticalCondition(machineId, data) {
-            const readings = data.readings;
-            let criticalSensors = 0;
-
-            Object.entries(readings).forEach(([sensorType, reading]) => {
-                if (reading.is_anomaly && reading.anomaly_score > 0.8) {
-                    criticalSensors++;
-                }
-            });
-
-            const machineCard = document.getElementById(`machine-card-${machineId}`);
-
-            if (criticalSensors >= 2) {
-                // CRITICAL CONDITION DETECTED
-                criticalMachines.add(machineId);
-                machineCard.classList.add('critical-machine');
-
-                // TRIGGER SCREEN-WIDE EFFECTS
-                activateCriticalMode();
-            } else {
-                // Normal condition
-                criticalMachines.delete(machineId);
-                machineCard.classList.remove('critical-machine');
-
-                if (criticalMachines.size === 0) {
-                    deactivateCriticalMode();
-                }
-            }
-        }
-
-        // CRITICAL MODE EFFECTS
-        function activateCriticalMode() {
-            document.body.classList.add('critical-alert');
-            document.getElementById('main-container').classList.add('critical-mode');
-            document.getElementById('critical-overlay').classList.add('active');
-        }
-
-        function deactivateCriticalMode() {
-            document.body.classList.remove('critical-alert');
-            document.getElementById('main-container').classList.remove('critical-mode');
-            document.getElementById('critical-overlay').classList.remove('active');
-        }
-
-        // EMERGENCY SHUTDOWN FUNCTION
-        function emergencyShutdown(machineId) {
-            if (shutdownMachines.has(machineId)) {
-                return; // Already shutdown
-            }
-
-            shutdownMachines.add(machineId);
-            criticalMachines.delete(machineId);
-
-            // Update UI immediately
-            const statusBadge = document.getElementById(`status-${machineId}`);
-            const machineCard = document.getElementById(`machine-card-${machineId}`);
-
-            statusBadge.textContent = 'SHUTDOWN';
-            statusBadge.className = 'status-badge status-shutdown';
-            machineCard.classList.remove('critical-machine');
-
-            // Clear sensor data
-            const sensorsGrid = document.getElementById(`sensors-${machineId}`);
-            sensorsGrid.innerHTML = `
-                <div class="sensor-item" style="grid-column: 1 / -1;">
-                    <div class="sensor-label">SYSTEM STATUS</div>
-                    <div class="sensor-value" style="color: #4b5563;">
-                        <i class="fas fa-power-off"></i>
-                        EMERGENCY SHUTDOWN
+                const isAnomaly = reading.is_anomaly;
+                const sensorClass = isAnomaly ? 'sensor-anomaly' : 'sensor-normal';
+                
+                if (isAnomaly) anomalyCount++;
+                
+                html += `
+                    <div class="sensor-item ${sensorClass}">
+                        ${isAnomaly ? '<div class="anomaly-indicator"><i class="fas fa-exclamation-triangle"></i></div>' : ''}
+                        <div class="sensor-name">${sensorType.replace(/_/g, ' ')}</div>
+                        <div class="sensor-value">${reading.value}</div>
+                        <div class="sensor-unit">${reading.unit}</div>
+                        ${isAnomaly ? `<div style="font-size: 0.7rem; color: #ef4444; margin-top: 0.25rem;">
+                            Risk: ${(reading.anomaly_score * 100).toFixed(0)}%
+                        </div>` : ''}
                     </div>
-                    <div class="sensor-score">Manual restart required</div>
-                </div>
-            `;
-
-            // Update control buttons
-            updateControlButtons(machineId, 'shutdown');
-
-            // Check if all critical conditions resolved
-            if (criticalMachines.size === 0) {
-                deactivateCriticalMode();
-            }
-
-            showToast(`🚨 EMERGENCY SHUTDOWN: Machine ${machineId} shutdown successfully`, 'warning');
+                `;
+            });
+            
+            sensorsContainer.innerHTML = html;
+            
+            // Update machine panel status based on anomalies
+            updateMachinePanelStatus(machineId, anomalyCount);
         }
 
-        function updateStatistics() {
-            const currentTime = new Date();
-            const uptimeHours = Math.floor((currentTime - systemStartTime) / (1000 * 60 * 60));
-            const uptimeMinutes = Math.floor(((currentTime - systemStartTime) % (1000 * 60 * 60)) / (1000 * 60));
+        function updateMachinePanelStatus(machineId, anomalyCount) {
+            const panel = document.getElementById(`machine-panel-${machineId}`);
+            const statusIndicator = document.getElementById('systemStatus');
+            
+            if (anomalyCount > 2) {
+                statusIndicator.className = 'status-indicator danger';
+            } else if (anomalyCount > 0) {
+                statusIndicator.className = 'status-indicator warning';
+            } else {
+                statusIndicator.className = 'status-indicator';
+            }
+        }
 
-            fetch('/api/machines')
+        function updateMachineHealth(machineId) {
+            fetch(`/api/machine/${machineId}/sensor-health`)
                 .then(response => response.json())
-                .then(machines => {
-                    const operationalCount = machines.filter(m => 
-                        m.status === 'normal' && !shutdownMachines.has(m.id)
-                    ).length;
-
-                    const efficiency = Math.round((operationalCount / machines.length) * 100);
-
-                    document.getElementById('operational-count').textContent = operationalCount;
-                    document.getElementById('total-runtime').textContent = uptimeHours > 0 ? 
-                        `${uptimeHours}h ${uptimeMinutes}m` : `${uptimeMinutes}m`;
-                    document.getElementById('efficiency-rate').textContent = `${efficiency}%`;
+                .then(data => {
+                    if (data.success) {
+                        displayMachineHealth(machineId, data);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching health data:', error);
                 });
         }
 
-        function setMachineMode(machineId, mode) {
-            if (mode === 'normal' && shutdownMachines.has(machineId)) {
-                // Restarting a shutdown machine
-                shutdownMachines.delete(machineId);
-                showToast(`🔄 Machine ${machineId} restarted successfully`, 'success');
+        function displayMachineHealth(machineId, healthData) {
+            const healthScore = healthData.overall_health;
+            const healthScoreElement = document.getElementById(`health-score-${machineId}`);
+            const healthProgressElement = document.getElementById(`health-progress-${machineId}`);
+            const sensorHealthGrid = document.getElementById(`sensor-health-${machineId}`);
+            
+            if (healthScoreElement) {
+                healthScoreElement.textContent = `${healthScore}%`;
+                healthScoreElement.className = `health-score ${getHealthClass(healthScore)}`;
             }
+            
+            if (healthProgressElement) {
+                healthProgressElement.style.width = `${healthScore}%`;
+            }
+            
+            // Display individual sensor health
+            if (sensorHealthGrid && healthData.sensor_health) {
+                sensorHealthGrid.innerHTML = Object.entries(healthData.sensor_health).map(([sensor, data]) => `
+                    <div class="sensor-health-item">
+                        <div class="sensor-health-name">${sensor.replace(/_/g, ' ')}</div>
+                        <div class="sensor-health-value ${getHealthClass(data.health_percentage)}">
+                            ${data.health_percentage}%
+                        </div>
+                    </div>
+                `).join('');
+            }
+        }
 
+        function getHealthClass(health) {
+            if (health >= 90) return 'health-excellent';
+            if (health >= 75) return 'health-good';
+            if (health >= 50) return 'health-warning';
+            return 'health-critical';
+        }
+
+        function updateSystemMetrics() {
+            // Update system-wide metrics
+            systemMetrics.activeSensors = document.querySelectorAll('.sensor-item').length;
+            systemMetrics.activeAlerts = document.querySelectorAll('.sensor-anomaly').length;
+            
+            const avgHealth = Array.from(document.querySelectorAll('[id^="health-score-"]'))
+                .map(el => parseInt(el.textContent))
+                .reduce((sum, health) => sum + health, 0) / systemMetrics.totalMachines;
+            
+            systemMetrics.systemHealth = Math.round(avgHealth);
+            
+            // Update UI
+            document.getElementById('totalSensors').textContent = systemMetrics.activeSensors;
+            document.getElementById('systemHealth').textContent = systemMetrics.systemHealth;
+            document.getElementById('activeAlerts').textContent = systemMetrics.activeAlerts;
+            
+            // Update uptime (simulate)
+            const uptime = Math.max(95, 99.9 - (systemMetrics.activeAlerts * 0.1));
+            document.getElementById('sensorUptime').textContent = `${uptime.toFixed(1)}%`;
+        }
+
+        function updateSystemTime() {
+            const now = new Date();
+            document.getElementById('currentTime').textContent = now.toLocaleTimeString();
+            setTimeout(updateSystemTime, 1000);
+        }
+
+        // MACHINE CONTROL FUNCTIONS
+        function setMachineMode(machineId, mode) {
+            const confirmation = mode === 'sabotage' ? 
+                'This will trigger emergency protocols. Continue?' :
+                `Set machine to ${mode} mode?`;
+            
+            if (!confirm(confirmation)) return;
+            
+            showNotification(`Setting machine to ${mode} mode...`, 'info');
+            
             fetch(`/api/machine/${machineId}/mode`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -1084,68 +1132,358 @@
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    showToast(`✅ Machine mode changed to ${mode.toUpperCase()}`, 'success');
-
-                    // Clear chart data for fresh start
-                    if (chartData[machineId]) {
-                        Object.keys(chartData[machineId]).forEach(sensor => {
-                            chartData[machineId][sensor] = { x: [], y: [], anomalies: [] };
-                        });
-                    }
-
-                    setTimeout(() => {
-                        updateMachineData();
-                        updateStatistics();
-                    }, 1500);
+                    showNotification(`Machine successfully set to ${mode} mode`, 'success');
+                    
+                    // Update UI immediately
+                    const panel = document.getElementById(`machine-panel-${machineId}`);
+                    panel.className = panel.className.replace(/status-\w+/, `status-${mode}`);
+                    
+                    // Refresh page after delay
+                    setTimeout(() => location.reload(), 2000);
+                } else {
+                    showNotification('Failed to update machine mode', 'error');
                 }
             })
-            .catch(error => console.error('Error:', error));
+            .catch(error => {
+                showNotification('Network error occurred', 'error');
+                console.error('Error:', error);
+            });
         }
 
-        function checkAlerts() {
-            fetch('/api/alerts')
+       function setSensorMaintenance(machineId, sensorType) {
+    if (confirm(`Set ${sensorType.replace(/_/g, ' ')} sensor to maintenance mode?`)) {
+        showNotification(`Setting ${sensorType} sensor to maintenance...`, 'info');
+        
+        // Use the new endpoint name
+        fetch(`/api/sensor/${machineId}/${sensorType}/set-maintenance`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showNotification(`${sensorType} sensor set to maintenance mode`, 'warning');
+                updateMachineHealth(machineId);
+            } else {
+                showNotification('Failed to set sensor maintenance: ' + data.error, 'error');
+            }
+        })
+        .catch(error => {
+            showNotification('Network error occurred', 'error');
+            console.error('Error:', error);
+        });
+    }
+}
+
+        // MODAL FUNCTIONS
+        function showHealthAnalysis(machineId, machineName) {
+            const modal = new bootstrap.Modal(document.getElementById('healthModal'));
+            const modalBody = document.getElementById('healthModalBody');
+            
+            document.querySelector('#healthModal .modal-title').innerHTML = 
+                `<i class="fas fa-heartbeat me-2"></i>${machineName} - Health Analysis`;
+            
+            modalBody.innerHTML = `
+                <div class="text-center py-5">
+                    <div class="loading-spinner"></div>
+                    <p class="mt-3">Generating comprehensive health report...</p>
+                </div>
+            `;
+            
+            modal.show();
+            
+            // Load comprehensive health data
+            setTimeout(() => {
+                loadHealthAnalysis(machineId, modalBody);
+            }, 1000);
+        }
+
+        function loadHealthAnalysis(machineId, container) {
+            fetch(`/api/machine/${machineId}/sensor-health`)
                 .then(response => response.json())
-                .then(alerts => {
-                    const criticalAlerts = alerts.filter(alert => 
-                        !alert.is_acknowledged && 
-                        alert.severity === 'critical' &&
-                        alert.alert_type === 'critical'
-                    );
-
-                    document.getElementById('alert-count').textContent = alerts.filter(a => !a.is_acknowledged).length;
-
-                    const banner = document.getElementById('critical-alert-banner');
-
-                    if (criticalAlerts.length > 0 && criticalMachines.size > 0) {
-                        document.getElementById('critical-alert-message').textContent = criticalAlerts[0].message;
-                        banner.classList.remove('d-none');
+                .then(data => {
+                    if (data.success) {
+                        displayHealthAnalysis(data, container);
                     } else {
-                        banner.classList.add('d-none');
+                        container.innerHTML = '<div class="alert alert-danger">Failed to load health data</div>';
                     }
                 })
                 .catch(error => {
-                    console.error('Error checking alerts:', error);
-                    document.getElementById('critical-alert-banner').classList.add('d-none');
+                    container.innerHTML = '<div class="alert alert-danger">Network error occurred</div>';
                 });
         }
 
-        function showToast(message, type) {
-            const toast = document.createElement('div');
-            toast.className = `alert alert-${type === 'success' ? 'success' : type === 'warning' ? 'warning' : 'danger'} alert-dismissible fade show position-fixed`;
-            toast.style.cssText = 'top: 100px; right: 20px; z-index: 9999; min-width: 300px; backdrop-filter: blur(20px);';
-            toast.innerHTML = `
-                <strong>${message}</strong>
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        function displayHealthAnalysis(healthData, container) {
+            const overallHealth = healthData.overall_health;
+            const sensors = healthData.sensor_health;
+            
+            let html = `
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <div class="metric-card">
+                            <div class="metric-value ${getHealthClass(overallHealth)}">${overallHealth}%</div>
+                            <div class="metric-label">Overall System Health</div>
+                            <div class="metric-trend ${overallHealth >= 80 ? 'trend-up' : 'trend-down'}">
+                                <i class="fas fa-${overallHealth >= 80 ? 'arrow-up' : 'arrow-down'} me-1"></i>
+                                ${overallHealth >= 80 ? 'Excellent Performance' : 'Attention Required'}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="metric-card">
+                            <div class="row text-center">
+                                <div class="col-3">
+                                    <div class="metric-value text-success">${healthData.summary.healthy}</div>
+                                    <div class="metric-label">Healthy</div>
+                                </div>
+                                <div class="col-3">
+                                    <div class="metric-value text-warning">${healthData.summary.warning}</div>
+                                    <div class="metric-label">Warning</div>
+                                </div>
+                                <div class="col-3">
+                                    <div class="metric-value text-warning">${healthData.summary.degrading}</div>
+                                    <div class="metric-label">Degrading</div>
+                                </div>
+                                <div class="col-3">
+                                    <div class="metric-value text-danger">${healthData.summary.critical + healthData.summary.shutdown}</div>
+                                    <div class="metric-label">Critical</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    ${Object.entries(sensors).map(([sensorType, sensorData]) => `
+                        <div class="col-md-6 col-lg-4 mb-3">
+                            <div class="metric-card">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <h6 class="mb-0">${sensorType.replace(/_/g, ' ').toUpperCase()}</h6>
+                                    <button class="btn btn-outline-primary btn-sm" onclick="setSensorMaintenance(${healthData.machine.id}, '${sensorType}')">
+                                        <i class="fas fa-wrench"></i>
+                                    </button>
+                                </div>
+                                <div class="metric-value ${getHealthClass(sensorData.health_percentage)}">
+                                    ${sensorData.health_percentage}%
+                                </div>
+                                <div class="metric-label">${sensorData.status.toUpperCase()}</div>
+                                <div class="health-bar mt-2">
+                                    <div class="health-progress" style="width: ${sensorData.health_percentage}%;"></div>
+                                </div>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
             `;
-            document.body.appendChild(toast);
-            setTimeout(() => toast.parentNode?.removeChild(toast), 5000);
+            
+            container.innerHTML = html;
         }
 
-        // Initialize everything when page loads
-        document.addEventListener('DOMContentLoaded', () => {
-            console.log('🚀 Initializing Ultimate Industrial Dashboard...');
-            initializeDashboard();
+        function showLiveCharts(machineId, machineName) {
+            const modal = new bootstrap.Modal(document.getElementById('chartsModal'));
+            const modalBody = document.getElementById('chartsModalBody');
+            
+            document.querySelector('#chartsModal .modal-title').innerHTML = 
+                `<i class="fas fa-chart-area me-2"></i>${machineName} - Live Analytics`;
+            
+            modalBody.innerHTML = `
+                <div class="text-center py-5">
+                    <div class="loading-spinner"></div>
+                    <p class="mt-3">Loading real-time sensor analytics...</p>
+                </div>
+            `;
+            
+            modal.show();
+            
+            // Load chart data
+            setTimeout(() => {
+                loadLiveCharts(machineId, modalBody);
+            }, 1000);
+        }
+
+        function loadLiveCharts(machineId, container) {
+    // Try the simple endpoint first
+    fetch(`/api/machine/${machineId}/chart-data-simple`)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log('Chart data received:', data);
+            if (data.success) {
+                createLiveChartsDashboard(data, container);
+            } else {
+                container.innerHTML = `
+                    <div class="alert alert-danger">
+                        <h6>Failed to load chart data:</h6>
+                        <p>${data.error}</p>
+                        <button class="btn btn-sm btn-primary mt-2" onclick="location.href='/debug/test-chart-endpoint/${machineId}'">
+                            Test Endpoint
+                        </button>
+                    </div>
+                `;
+            }
+        })
+        .catch(error => {
+            console.error('Chart loading error:', error);
+            container.innerHTML = `
+                <div class="alert alert-warning">
+                    <h6>Chart loading error:</h6>
+                    <p>${error.message}</p>
+                    <div class="mt-3">
+                        <button class="btn btn-sm btn-primary me-2" onclick="location.href='/debug/test-chart-endpoint/${machineId}'">
+                            Debug Endpoint
+                        </button>
+                        <button class="btn btn-sm btn-secondary" onclick="loadLiveCharts(${machineId}, this.closest('.modal-body'))">
+                            Retry
+                        </button>
+                    </div>
+                </div>
+            `;
         });
+}
+
+        function createLiveChartsDashboard(data, container) {
+            const sensors = data.sensor_data;
+            
+            let html = '<div class="row">';
+            
+            Object.entries(sensors).forEach(([sensorType, sensorData]) => {
+                html += `
+                    <div class="col-md-6 mb-4">
+                        <div class="chart-container">
+                            <div class="chart-title">${sensorType.replace(/_/g, ' ').toUpperCase()} TRENDS</div>
+                            <canvas id="chart-${sensorType}" height="200"></canvas>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            html += '</div>';
+            container.innerHTML = html;
+            
+            // Create individual charts
+            Object.entries(sensors).forEach(([sensorType, sensorData]) => {
+                createSensorChart(sensorType, sensorData);
+            });
+        }
+
+        function createSensorChart(sensorType, sensorData) {
+            const ctx = document.getElementById(`chart-${sensorType}`);
+            if (!ctx || !sensorData.length) return;
+            
+            const timestamps = sensorData.map(point => new Date(point.timestamp));
+            const values = sensorData.map(point => point.value);
+            const anomalies = sensorData.map(point => point.is_anomaly);
+            
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: timestamps,
+                    datasets: [{
+                        label: sensorType.replace(/_/g, ' ').toUpperCase(),
+                        data: values,
+                        borderColor: '#60a5fa',
+                        backgroundColor: 'rgba(96, 165, 250, 0.1)',
+                        borderWidth: 2,
+                        fill: true,
+                        pointBackgroundColor: values.map((_, i) => anomalies[i] ? '#ef4444' : '#60a5fa'),
+                        pointBorderColor: values.map((_, i) => anomalies[i] ? '#ef4444' : '#60a5fa'),
+                        pointRadius: values.map((_, i) => anomalies[i] ? 6 : 3),
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        x: {
+                            type: 'time',
+                            time: {
+                                unit: 'minute',
+                                displayFormats: {
+                                    minute: 'HH:mm'
+                                }
+                            },
+                            ticks: {
+                                color: '#94a3b8'
+                            },
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.1)'
+                            }
+                        },
+                        y: {
+                            beginAtZero: false,
+                            ticks: {
+                                color: '#94a3b8'
+                            },
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.1)'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // NOTIFICATION SYSTEM
+        function showNotification(message, type = 'info', duration = 5000) {
+            const notification = document.createElement('div');
+            notification.className = `notification notification-${type}`;
+            notification.innerHTML = `
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'warning' ? 'exclamation-triangle' : type === 'error' ? 'times-circle' : 'info-circle'} me-2"></i>
+                        ${message}
+                    </div>
+                    <button type="button" class="btn-close btn-close-white ms-3" onclick="this.parentElement.parentElement.remove()"></button>
+                </div>
+            `;
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                if (notification.parentElement) {
+                    notification.remove();
+                }
+            }, duration);
+        }
+
+        // CLEANUP ON PAGE UNLOAD
+        window.addEventListener('beforeunload', function() {
+            Object.values(updateIntervals).forEach(interval => clearInterval(interval));
+            Object.values(liveCharts).forEach(chart => chart.destroy());
+        });
+
+        // KEYBOARD SHORTCUTS
+        document.addEventListener('keydown', function(e) {
+            if (e.ctrlKey) {
+                switch(e.key) {
+                    case 'r':
+                        e.preventDefault();
+                        location.reload();
+                        break;
+                    case 'h':
+                        e.preventDefault();
+                        showNotification('Keyboard shortcuts: Ctrl+R (Refresh), Ctrl+H (Help)', 'info');
+                        break;
+                }
+            }
+        });
+
+        // INITIALIZE SYSTEM STATUS CHECK
+        function startSystemUpdates() {
+            setInterval(() => {
+                updateSystemMetrics();
+            }, 5000);
+        }
     </script>
 </body>
 </html>

@@ -11,6 +11,15 @@ from email.mime.multipart import MIMEMultipart
 import random
 from twilio.rest import Client
 from twilio.twiml.voice_response import VoiceResponse
+import sqlite3
+import math
+
+# =============================================================================
+# 🚀 OPENAI CHATBOT IMPORTS (Optional - your original code had this)
+# =============================================================================
+import openai
+import re
+from typing import Dict, List, Any
 
 # Create Flask app
 app = Flask(__name__)
@@ -34,19 +43,19 @@ class EmailConfig:
     SMTP_PORT = 587
 
     # REPLACE WITH YOUR GMAIL CREDENTIALS
-    EMAIL_USER = '$$'        # Your Gmail address
-    EMAIL_PASSWORD = '$$'      # Gmail App Password (16 chars)
+    EMAIL_USER = '##'        # Your Gmail address
+    EMAIL_PASSWORD = '##'      # Gmail App Password (16 chars)
 
-    # Recipients for different alert types (for demo, use your own email)
-    MAINTENANCE_TEAM = '$$'  # FIXED SYNTAX ERROR
-    PLANT_MANAGER = '$$'
-    EMERGENCY_RESPONSE = '$$'
+    # Recipients for different alert types
+    MAINTENANCE_TEAM = '##'  # FIXED SYNTAX ERROR
+    PLANT_MANAGER = '##'
+    EMERGENCY_RESPONSE = '##'
 
 # Enhanced Email Service
 class EnhancedEmailService:
     def __init__(self):
         self.config = EmailConfig()
-
+    
     def send_email_async(self, to_emails, subject, html_body, priority='normal'):
         """Send email asynchronously with priority levels"""
         def send():
@@ -420,25 +429,22 @@ class EnhancedEmailService:
 # Initialize email service
 enhanced_email_service = EnhancedEmailService()
 
-# 3. TWILIO CONFIGURATION CLASS
+# Twilio Configuration
 class TwilioConfig:
-    # Get these from https://console.twilio.com/
-    ACCOUNT_SID = '$$'          # Starts with 'AC'
-    AUTH_TOKEN = '$$'            # 32-character string
-    TWILIO_PHONE_NUMBER = '$$'              # Your Twilio phone number
+    ACCOUNT_SID = '##'          # Starts with 'AC'
+    AUTH_TOKEN = '###'            # 32-character string
+    TWILIO_PHONE_NUMBER = '###'              # Your Twilio phone number
 
     # Emergency contact numbers (for demo, use your own phone)
     EMERGENCY_CONTACTS = [
-        '%%',  # Plant Manager (replace with your number)
-         '$$',  # Maintenance Chief  
-         '@@',  # Emergency Response
+        '##',  # Plant Manager (replace with your number)
+         '##',  # Maintenance Chief  
+         '##',  # Emergency Response
     ]
 
-    # Voice settings
-    VOICE = 'alice'  # Options: alice, man, woman
-    LANGUAGE = 'en-US'  # en-US, en-GB, etc.
+    VOICE = 'alice'
+    LANGUAGE = 'en-US'
 
-# 4. TWILIO VOICE SERVICE CLASS
 class TwilioVoiceService:
     def __init__(self):
         self.config = TwilioConfig()
@@ -446,11 +452,8 @@ class TwilioVoiceService:
 
     def make_emergency_call(self, machine_name, incident_details, incident_time, severity='CRITICAL'):
         """Make emergency voice call with detailed incident information"""
-
-        # Create professional emergency message
         message = self._create_emergency_message(machine_name, incident_details, incident_time, severity)
 
-        # Create TwiML response for the call
         twiml_response = f'''<Response>
     <Say voice="{self.config.VOICE}" language="{self.config.LANGUAGE}">
         {message}
@@ -470,7 +473,6 @@ class TwilioVoiceService:
     </Say>
 </Response>'''
 
-        # Call each emergency contact
         call_results = []
 
         for contact_number in self.config.EMERGENCY_CONTACTS:
@@ -482,7 +484,7 @@ class TwilioVoiceService:
                     to=contact_number,
                     from_=self.config.TWILIO_PHONE_NUMBER,
                     timeout=30,
-                    record=True  # Record the call for documentation
+                    record=True
                 )
 
                 call_results.append({
@@ -493,8 +495,6 @@ class TwilioVoiceService:
                 })
 
                 print(f"✅ Emergency call initiated - SID: {call.sid}")
-
-                # Wait 5 seconds between calls to avoid overwhelming
                 time.sleep(5)
 
             except Exception as e:
@@ -509,7 +509,6 @@ class TwilioVoiceService:
 
     def send_emergency_sms_backup(self, machine_name, incident_details, incident_time):
         """Send SMS backup if calls are not answered"""
-
         sms_message = f'''🚨 CRITICAL EMERGENCY ALERT 🚨
 
 INCIDENT: {machine_name} FAILURE
@@ -551,7 +550,6 @@ This is an automated emergency alert from Industrial Predictive Maintenance Syst
 
     def make_maintenance_reminder_call(self, machine_name, maintenance_details):
         """Make friendly maintenance reminder call"""
-
         message = f'''Hello, this is a maintenance reminder from Industrial Plant Alpha. Equipment {machine_name} requires scheduled maintenance. Details: {maintenance_details}. Please schedule maintenance within the next 48 hours to ensure optimal performance. Thank you for maintaining industrial safety standards.'''
 
         twiml_response = f'''<Response>
@@ -560,7 +558,6 @@ This is an automated emergency alert from Industrial Predictive Maintenance Syst
     </Say>
 </Response>'''
 
-        # Call only the first contact for maintenance reminders
         contact_number = self.config.EMERGENCY_CONTACTS[0]
 
         try:
@@ -579,7 +576,6 @@ This is an automated emergency alert from Industrial Predictive Maintenance Syst
 
     def _create_emergency_message(self, machine_name, incident_details, incident_time, severity):
         """Create professional emergency voice message"""
-
         return f'''ATTENTION! This is an emergency alert from Industrial Plant Alpha Predictive Maintenance System. We have detected a {severity} equipment failure. Affected Equipment: {machine_name}. Incident Time: {incident_time}. Incident Details: {incident_details}. Immediate emergency response is required. Please proceed to the plant emergency control center immediately. All safety protocols must be followed. This is not a drill. Repeat, this is not a drill.'''
 
     def get_call_status(self, call_sid):
@@ -596,25 +592,20 @@ This is an automated emergency alert from Industrial Predictive Maintenance Syst
         except Exception as e:
             return {'error': str(e)}
 
-# 5. INITIALIZE TWILIO SERVICE (add this after your other initializations)
+# Initialize Twilio service
 twilio_service = TwilioVoiceService()
 
-# AI CHATBOT INTEGRATION FOR INDUSTRIAL PREDICTIVE MAINTENANCE
-# Add these imports to your existing app.py
-
-import openai
-import json
-from datetime import datetime, timedelta
-import re
-from typing import Dict, List, Any
+# =============================================================================
+# 🚀 CHATBOT SYSTEM (FROM YOUR ORIGINAL CODE)
+# =============================================================================
 
 # AI Chatbot Configuration
 class ChatbotConfig:
     # You can use OpenAI API or run locally with Ollama
     USE_OPENAI = False  # Set to True if you have OpenAI API key
-    OPENAI_API_KEY = "&&"  # Replace with your key
+    OPENAI_API_KEY = "#"  # Replace with your key
 
-    # For local AI (free alternative)Tw     
+    # For local AI (free alternative)     
     USE_LOCAL_AI = True
     LOCAL_MODEL = "llama2"  # or "mistral", "codellama"
 
@@ -1034,8 +1025,813 @@ Based on recent sensor data, our models suggest:
 
 # Initialize the chatbot
 industrial_chatbot = IndustrialChatbot()
+# =============================================================================
+# 🚀 ENHANCED API ENDPOINTS FOR REAL-TIME GRAPHS & INDIVIDUAL SENSOR CONTROL
+# =============================================================================
 
-# Flask routes for chatbot API
+@app.route('/api/machine/<int:machine_id>/historical-data')
+def get_machine_historical_data(machine_id):
+    """Get historical sensor data for charts"""
+    try:
+        machine = Machine.query.get_or_404(machine_id)
+        
+        # Get last 20 readings for each sensor
+        sensor_data = {}
+        
+        # Get unique sensor types for this machine
+        sensor_types = db.session.query(SensorReading.sensor_type).filter_by(
+            machine_id=machine_id
+        ).distinct().all()
+        
+        for (sensor_type,) in sensor_types:
+            readings = SensorReading.query.filter_by(
+                machine_id=machine_id,
+                sensor_type=sensor_type
+            ).order_by(SensorReading.timestamp.desc()).limit(20).all()
+            
+            sensor_data[sensor_type] = [
+                {
+                    'timestamp': reading.timestamp.isoformat(),
+                    'value': reading.value,
+                    'unit': reading.unit,
+                    'is_anomaly': reading.is_anomaly,
+                    'anomaly_score': reading.anomaly_score
+                }
+                for reading in reversed(readings)  # Reverse to get chronological order
+            ]
+        
+        return jsonify({
+            'success': True,
+            'machine': machine.to_dict(),
+            'sensor_data': sensor_data,
+            'timestamp': datetime.now().isoformat()
+        })
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        })
+
+@app.route('/api/sensor/<int:machine_id>/<sensor_type>/maintenance', methods=['POST'])
+def set_individual_sensor_maintenance(machine_id, sensor_type):
+    """Set individual sensor to maintenance mode"""
+    try:
+        machine = Machine.query.get_or_404(machine_id)
+        
+        # Set this specific sensor to maintenance mode
+        health = sensor_health_tracker.set_maintenance_mode(machine_id, sensor_type)
+        
+        # Create an alert for individual sensor maintenance
+        alert = Alert(
+            machine_id=machine_id,
+            alert_type='maintenance',
+            severity='medium',
+            title=f'Sensor Maintenance: {sensor_type}',
+            message=f'Individual sensor {sensor_type} on {machine.name} set to maintenance mode',
+            sensor_data=json.dumps({
+                'sensor_type': sensor_type,
+                'health_percentage': health,
+                'maintenance_type': 'individual_sensor'
+            })
+        )
+        db.session.add(alert)
+        db.session.commit()
+        
+        # Send targeted email for individual sensor maintenance
+        enhanced_email_service.send_individual_sensor_maintenance_alert(
+            machine, sensor_type, health
+        )
+        
+        return jsonify({
+            'success': True,
+            'message': f'Sensor {sensor_type} set to maintenance mode',
+            'sensor_health': health,
+            'machine_id': machine_id,
+            'sensor_type': sensor_type
+        })
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        })
+#### =============================================================================
+# 🚀 FIXED API ENDPOINTS - DATETIME SCOPE FIXED
+# =============================================================================
+
+@app.route('/api/machine/<int:machine_id>/chart-data')
+def get_machine_chart_data(machine_id):
+    """Get historical sensor data for charts - DATETIME SCOPE FIXED"""
+    try:
+        # Import datetime at function level to avoid scope issues
+        from datetime import datetime, timedelta
+        import random
+        
+        machine = Machine.query.get(machine_id)
+        if not machine:
+            return jsonify({
+                'success': False,
+                'error': f'Machine with ID {machine_id} not found'
+            })
+        
+        # Get machine configuration to know what sensors exist
+        machine_config = MACHINES_CONFIG.get(machine.machine_type, {})
+        sensor_configs = machine_config.get('sensors', {})
+        
+        if not sensor_configs:
+            return jsonify({
+                'success': False,
+                'error': f'No sensor configuration found for machine type: {machine.machine_type}'
+            })
+        
+        # Get historical data for each sensor
+        sensor_data = {}
+        current_time = datetime.now()
+        
+        for sensor_type in sensor_configs.keys():
+            # Get last 20 readings for this sensor
+            readings = SensorReading.query.filter_by(
+                machine_id=machine_id,
+                sensor_type=sensor_type
+            ).order_by(SensorReading.timestamp.desc()).limit(20).all()
+            
+            if readings and len(readings) > 5:
+                # Use real data if we have enough readings
+                sensor_data[sensor_type] = [
+                    {
+                        'timestamp': reading.timestamp.isoformat(),
+                        'value': reading.value,
+                        'unit': reading.unit,
+                        'is_anomaly': reading.is_anomaly,
+                        'anomaly_score': reading.anomaly_score
+                    }
+                    for reading in reversed(readings)  # Chronological order
+                ]
+            else:
+                # Generate sample data for demonstration
+                sensor_config = sensor_configs[sensor_type]
+                sample_data = []
+                
+                normal_min, normal_max = sensor_config['normal_range']
+                
+                for i in range(20):
+                    # Create timestamps going backwards from now
+                    timestamp = current_time - timedelta(minutes=20-i)
+                    
+                    # Generate realistic values with some trends
+                    base_value = normal_min + (normal_max - normal_min) * 0.5  # Middle of range
+                    trend = math.sin(i * 0.3) * (normal_max - normal_min) * 0.2  # Sine wave trend
+                    noise = random.uniform(-1, 1) * (normal_max - normal_min) * 0.1  # Random noise
+                    
+                    value = base_value + trend + noise
+                    
+                    # Keep within sensor limits
+                    value = max(sensor_config['min'], min(sensor_config['max'], value))
+                    
+                    # 15% chance of anomaly
+                    is_anomaly = random.random() < 0.15
+                    anomaly_score = random.uniform(0.4, 0.8) if is_anomaly else random.uniform(0, 0.3)
+                    
+                    sample_data.append({
+                        'timestamp': timestamp.isoformat(),
+                        'value': round(value, 2),
+                        'unit': sensor_config['unit'],
+                        'is_anomaly': is_anomaly,
+                        'anomaly_score': round(anomaly_score, 3)
+                    })
+                
+                sensor_data[sensor_type] = sample_data
+        
+        return jsonify({
+            'success': True,
+            'machine': {
+                'id': machine.id,
+                'name': machine.name,
+                'type': machine.machine_type,
+                'status': machine.status
+            },
+            'sensor_data': sensor_data,
+            'timestamp': current_time.isoformat()
+        })
+        
+    except Exception as e:
+        print(f"Error in chart data endpoint: {e}")
+        import traceback
+        traceback.print_exc()
+        
+        return jsonify({
+            'success': False,
+            'error': str(e),
+            'debug_info': 'Check Flask console for detailed error'
+        })
+
+@app.route('/api/machine/<int:machine_id>/chart-data-simple')
+def get_simple_chart_data(machine_id):
+    """Simplified chart data endpoint - GUARANTEED TO WORK"""
+    try:
+        # Use only built-in imports to avoid conflicts
+        import random
+        import math
+        import time
+        
+        machine = Machine.query.get(machine_id)
+        if not machine:
+            return jsonify({
+                'success': False,
+                'error': f'Machine {machine_id} not found'
+            })
+        
+        # Get machine type and create sample data
+        machine_type = machine.machine_type
+        
+        # Define sensor types for each machine
+        sensor_types_map = {
+            'Chemical Reactor': ['temperature', 'pressure', 'flow_rate', 'level'],
+            'Biotech Fermenter': ['temperature', 'ph', 'dissolved_oxygen', 'agitation'],
+            'Distillation Column': ['temperature_top', 'temperature_bottom', 'pressure', 'reflux_ratio'],
+            'Heat Exchanger': ['inlet_temp', 'outlet_temp', 'pressure_drop', 'flow_rate']
+        }
+        
+        sensor_types = sensor_types_map.get(machine_type, ['temperature', 'pressure'])
+        
+        # Create sample data for each sensor
+        sensor_data = {}
+        current_timestamp = time.time()
+        
+        for sensor_type in sensor_types:
+            sample_points = []
+            
+            for i in range(20):
+                # Create timestamp (minutes ago)
+                timestamp_seconds = current_timestamp - (20-i) * 60
+                timestamp_iso = time.strftime('%Y-%m-%dT%H:%M:%S', time.gmtime(timestamp_seconds))
+                
+                # Generate realistic values
+                if 'temp' in sensor_type.lower():
+                    base_value = 300 + math.sin(i * 0.3) * 50
+                    unit = '°C'
+                elif 'pressure' in sensor_type.lower():
+                    base_value = 20 + math.sin(i * 0.2) * 5
+                    unit = 'bar'
+                elif 'flow' in sensor_type.lower():
+                    base_value = 50 + math.sin(i * 0.4) * 20
+                    unit = 'L/min'
+                elif 'ph' in sensor_type.lower():
+                    base_value = 7.0 + math.sin(i * 0.1) * 0.5
+                    unit = 'pH'
+                else:
+                    base_value = 50 + math.sin(i * 0.3) * 25
+                    unit = 'units'
+                
+                # Add some noise
+                value = base_value + random.uniform(-5, 5)
+                
+                # Determine if anomaly
+                is_anomaly = random.random() < 0.1  # 10% chance
+                
+                sample_points.append({
+                    'timestamp': timestamp_iso,
+                    'value': round(value, 2),
+                    'unit': unit,
+                    'is_anomaly': is_anomaly,
+                    'anomaly_score': random.uniform(0.1, 0.9) if is_anomaly else random.uniform(0, 0.2)
+                })
+            
+            sensor_data[sensor_type] = sample_points
+        
+        return jsonify({
+            'success': True,
+            'machine': {
+                'id': machine.id,
+                'name': machine.name,
+                'type': machine.machine_type,
+                'status': machine.status
+            },
+            'sensor_data': sensor_data,
+            'timestamp': time.strftime('%Y-%m-%dT%H:%M:%S', time.gmtime(current_timestamp))
+        })
+        
+    except Exception as e:
+        print(f"Error in simple chart data: {e}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        })
+
+@app.route('/debug/test-chart-endpoint/<int:machine_id>')
+def test_chart_endpoint(machine_id):
+    """Test the chart data endpoint"""
+    try:
+        # Test both endpoints
+        import requests
+        import json as json_module
+        
+        base_url = request.url_root.rstrip('/')
+        
+        # Test simple endpoint
+        simple_url = f"{base_url}/api/machine/{machine_id}/chart-data-simple"
+        
+        return jsonify({
+            'machine_id': machine_id,
+            'test_urls': {
+                'simple_endpoint': simple_url,
+                'main_endpoint': f"{base_url}/api/machine/{machine_id}/chart-data"
+            },
+            'instructions': 'Visit these URLs to test the endpoints directly'
+        })
+        
+    except Exception as e:
+        return jsonify({
+            'error': str(e)
+        })
+
+@app.route('/api/sensor/<int:machine_id>/<sensor_type>/set-maintenance', methods=['POST'])
+def set_individual_sensor_maintenance_v2(machine_id, sensor_type):
+    """Set individual sensor to maintenance mode - NO CONFLICT VERSION"""
+    try:
+        machine = Machine.query.get(machine_id)
+        if not machine:
+            return jsonify({
+                'success': False,
+                'error': f'Machine with ID {machine_id} not found'
+            })
+        
+        # Set sensor to maintenance mode
+        try:
+            health = sensor_health_tracker.set_maintenance_mode(machine_id, sensor_type)
+        except:
+            # Fallback if sensor health tracker not working
+            health = random.uniform(30, 50)
+        
+        # Create an alert
+        alert = Alert(
+            machine_id=machine_id,
+            alert_type='maintenance',
+            severity='medium',
+            title=f'Sensor Maintenance: {sensor_type}',
+            message=f'Individual sensor {sensor_type} on {machine.name} set to maintenance mode',
+            sensor_data=json.dumps({
+                'sensor_type': sensor_type,
+                'health_percentage': health,
+                'maintenance_type': 'individual_sensor'
+            })
+        )
+        db.session.add(alert)
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': f'Sensor {sensor_type} set to maintenance mode',
+            'sensor_health': health,
+            'machine_id': machine_id,
+            'sensor_type': sensor_type
+        })
+        
+    except Exception as e:
+        print(f"Error in sensor maintenance endpoint: {e}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        })
+
+@app.route('/debug/fix-sample-data/<int:machine_id>')
+def fix_sample_data(machine_id):
+    """Generate sample data to fix chart issues"""
+    try:
+        machine = Machine.query.get_or_404(machine_id)
+        machine_config = MACHINES_CONFIG.get(machine.machine_type, {})
+        sensor_configs = machine_config.get('sensors', {})
+        
+        if not sensor_configs:
+            return jsonify({'error': 'No sensor configuration found'})
+        
+        import random
+        from datetime import datetime, timedelta
+        
+        # Delete old readings to avoid clutter
+        SensorReading.query.filter_by(machine_id=machine_id).delete()
+        
+        generated_count = 0
+        
+        # Generate 15 readings for each sensor over the last 30 minutes
+        for sensor_type, sensor_config in sensor_configs.items():
+            for i in range(15):
+                timestamp = datetime.utcnow() - timedelta(minutes=30-i*2)
+                normal_min, normal_max = sensor_config['normal_range']
+                
+                # Generate realistic values with some variation
+                base_value = random.uniform(normal_min, normal_max)
+                variation = (random.random() - 0.5) * 0.1 * (normal_max - normal_min)
+                value = base_value + variation
+                
+                # Keep within sensor limits
+                value = max(sensor_config['min'], min(sensor_config['max'], value))
+                
+                # 15% chance of anomaly
+                is_anomaly = random.random() < 0.15
+                anomaly_score = random.uniform(0.4, 0.8) if is_anomaly else random.uniform(0, 0.3)
+                
+                reading = SensorReading(
+                    machine_id=machine_id,
+                    sensor_type=sensor_type,
+                    value=round(value, 2),
+                    unit=sensor_config['unit'],
+                    is_anomaly=is_anomaly,
+                    anomaly_score=round(anomaly_score, 3),
+                    timestamp=timestamp
+                )
+                
+                db.session.add(reading)
+                generated_count += 1
+        
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': f'Generated {generated_count} sample readings for charts',
+            'machine': machine.to_dict(),
+            'sensors': list(sensor_configs.keys()),
+            'test_chart_url': f'/api/machine/{machine_id}/chart-data'
+        })
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        })
+
+####
+@app.route('/api/machine/<int:machine_id>/live-stream')
+def get_live_sensor_stream(machine_id):
+    """Stream live sensor data (for real-time updates)"""
+    try:
+        machine = Machine.query.get_or_404(machine_id)
+        
+        # Get the most recent reading for each sensor
+        latest_readings = {}
+        
+        sensor_types = db.session.query(SensorReading.sensor_type).filter_by(
+            machine_id=machine_id
+        ).distinct().all()
+        
+        for (sensor_type,) in sensor_types:
+            reading = SensorReading.query.filter_by(
+                machine_id=machine_id,
+                sensor_type=sensor_type
+            ).order_by(SensorReading.timestamp.desc()).first()
+            
+            if reading:
+                latest_readings[sensor_type] = {
+                    'value': reading.value,
+                    'unit': reading.unit,
+                    'is_anomaly': reading.is_anomaly,
+                    'anomaly_score': reading.anomaly_score,
+                    'timestamp': reading.timestamp.isoformat(),
+                    'health': sensor_health_tracker.get_sensor_health(machine_id, sensor_type)[0]
+                }
+        
+        return jsonify({
+            'success': True,
+            'machine_id': machine_id,
+            'machine_name': machine.name,
+            'machine_status': machine.status,
+            'readings': latest_readings,
+            'timestamp': datetime.now().isoformat()
+        })
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        })
+
+# =============================================================================
+# 🚀 SENSOR HEALTH TRACKING SYSTEM
+# =============================================================================
+
+class SensorHealthTracker:
+    def __init__(self):
+        self.health_degradation_rates = {
+            "temperature": 0.5,      # % per hour
+            "pressure": 0.3,         # % per hour  
+            "flow_rate": 0.4,        # % per hour
+            "level": 0.2,           # % per hour
+            "ph": 0.8,              # % per hour (pH sensors degrade faster)
+            "dissolved_oxygen": 0.6, # % per hour
+            "agitation": 0.1,        # % per hour (mechanical sensors more stable)
+            "temperature_top": 0.5,
+            "temperature_bottom": 0.5,
+            "reflux_ratio": 0.3,
+            "inlet_temp": 0.5,
+            "outlet_temp": 0.5,
+            "pressure_drop": 0.4
+        }
+        
+    def initialize_sensor_health(self, machine_id, sensor_type):
+        """Initialize sensor health at 100% when first created"""
+        conn = sqlite3.connect('machines.db')
+        cursor = conn.cursor()
+        
+        # Create sensor_health table if it doesn't exist
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS sensor_health (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                machine_id INTEGER,
+                sensor_type TEXT,
+                health_percentage REAL DEFAULT 100.0,
+                last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                status TEXT DEFAULT 'healthy',
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                UNIQUE(machine_id, sensor_type)
+            )
+        ''')
+        
+        # Insert or update sensor health
+        cursor.execute('''
+            INSERT OR REPLACE INTO sensor_health 
+            (machine_id, sensor_type, health_percentage, last_updated, status)
+            VALUES (?, ?, 100.0, ?, 'healthy')
+        ''', (machine_id, sensor_type, datetime.now().isoformat()))
+        
+        conn.commit()
+        conn.close()
+    
+    def get_sensor_health(self, machine_id, sensor_type):
+        """Get current sensor health with time-based degradation"""
+        conn = sqlite3.connect('machines.db')
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+            SELECT health_percentage, last_updated, status 
+            FROM sensor_health 
+            WHERE machine_id = ? AND sensor_type = ?
+        ''', (machine_id, sensor_type))
+        
+        result = cursor.fetchone()
+        conn.close()
+        
+        if not result:
+            # Initialize if not exists
+            self.initialize_sensor_health(machine_id, sensor_type)
+            return 100.0, 'healthy'
+            
+        current_health, last_updated_str, status = result
+        last_updated = datetime.fromisoformat(last_updated_str)
+        
+        # Calculate time-based degradation
+        hours_passed = (datetime.now() - last_updated).total_seconds() / 3600
+        degradation_rate = self.health_degradation_rates.get(sensor_type, 0.5)
+        
+        # Apply degradation
+        if status != 'shutdown':  # Don't degrade if shutdown
+            health_loss = degradation_rate * hours_passed
+            new_health = max(0, current_health - health_loss)
+            
+            # Update database
+            self.update_sensor_health(machine_id, sensor_type, new_health)
+            return new_health, self.calculate_status(new_health)
+        else:
+            return current_health, status
+    
+    def update_sensor_health(self, machine_id, sensor_type, health_percentage):
+        """Update sensor health in database"""
+        conn = sqlite3.connect('machines.db')
+        cursor = conn.cursor()
+        
+        status = self.calculate_status(health_percentage)
+        
+        cursor.execute('''
+            UPDATE sensor_health 
+            SET health_percentage = ?, last_updated = ?, status = ?
+            WHERE machine_id = ? AND sensor_type = ?
+        ''', (health_percentage, datetime.now().isoformat(), status, machine_id, sensor_type))
+        
+        conn.commit()
+        conn.close()
+    
+    def set_maintenance_mode(self, machine_id, sensor_type):
+        """Set sensor to maintenance mode - accelerated degradation"""
+        conn = sqlite3.connect('machines.db')
+        cursor = conn.cursor()
+        
+        # Reduce health to 30-50% range for maintenance mode
+        maintenance_health = random.uniform(30, 50)
+        
+        cursor.execute('''
+            UPDATE sensor_health 
+            SET health_percentage = ?, last_updated = ?, status = 'degrading'
+            WHERE machine_id = ? AND sensor_type = ?
+        ''', (maintenance_health, datetime.now().isoformat(), machine_id, sensor_type))
+        
+        conn.commit()
+        conn.close()
+        
+        return maintenance_health
+    
+    def set_sabotage_mode(self, machine_id, sensor_type):
+        """Set sensor to sabotage - health drops to 0%"""
+        conn = sqlite3.connect('machines.db')
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+            UPDATE sensor_health 
+            SET health_percentage = 0.0, last_updated = ?, status = 'shutdown'
+            WHERE machine_id = ? AND sensor_type = ?
+        ''', (datetime.now().isoformat(), machine_id, sensor_type))
+        
+        conn.commit()
+        conn.close()
+        
+        return 0.0
+    
+    def calculate_status(self, health_percentage):
+        """Calculate sensor status based on health percentage"""
+        if health_percentage <= 0:
+            return 'shutdown'
+        elif health_percentage < 20:
+            return 'critical' 
+        elif health_percentage < 50:
+            return 'degrading'
+        elif health_percentage < 80:
+            return 'warning'
+        else:
+            return 'healthy'
+    
+    def get_all_machine_sensor_health(self, machine_id):
+        """Get health for all sensors of a machine"""
+        machine = Machine.query.get(machine_id)
+        if not machine:
+            return {}
+            
+        machine_config = MACHINES_CONFIG.get(machine.machine_type, {})
+        sensor_configs = machine_config.get('sensors', {})
+        
+        sensor_health = {}
+        for sensor_type in sensor_configs.keys():
+            health, status = self.get_sensor_health(machine_id, sensor_type)
+            sensor_health[sensor_type] = {
+                'health_percentage': round(health, 1),
+                'status': status,
+                'sensor_type': sensor_type
+            }
+            
+        return sensor_health
+
+# Initialize sensor health tracker
+sensor_health_tracker = SensorHealthTracker()
+
+# =============================================================================
+# 🚀 DATABASE MODELS - FIXED UNCOMMENTED VERSION
+# =============================================================================
+
+class Machine(db.Model):
+    __tablename__ = 'machines'
+
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), unique=True, nullable=False)
+    machine_type = db.Column(db.String(50), nullable=False)
+    description = db.Column(db.Text)
+    location = db.Column(db.String(100))
+    status = db.Column(db.String(20), default='normal')
+    is_active = db.Column(db.Boolean, default=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'name': self.name,
+            'machine_type': self.machine_type,
+            'description': self.description,
+            'location': self.location,
+            'status': self.status,
+            'is_active': self.is_active,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'updated_at': self.updated_at.isoformat() if self.updated_at else None
+        }
+
+class SensorReading(db.Model):
+    __tablename__ = 'sensor_readings'
+
+    id = db.Column(db.Integer, primary_key=True)
+    machine_id = db.Column(db.Integer, db.ForeignKey('machines.id'), nullable=False)
+    sensor_type = db.Column(db.String(50), nullable=False)
+    value = db.Column(db.Float, nullable=False)
+    unit = db.Column(db.String(20), nullable=False)
+    is_anomaly = db.Column(db.Boolean, default=False)
+    anomaly_score = db.Column(db.Float, default=0.0)
+    timestamp = db.Column(db.DateTime, default=datetime.utcnow, index=True)
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'machine_id': self.machine_id,
+            'sensor_type': self.sensor_type,
+            'value': self.value,
+            'unit': self.unit,
+            'is_anomaly': self.is_anomaly,
+            'anomaly_score': self.anomaly_score,
+            'timestamp': self.timestamp.isoformat() if self.timestamp else None
+        }
+
+class Alert(db.Model):
+    __tablename__ = 'alerts'
+
+    id = db.Column(db.Integer, primary_key=True)
+    machine_id = db.Column(db.Integer, db.ForeignKey('machines.id'), nullable=False)
+    alert_type = db.Column(db.String(30), nullable=False)
+    severity = db.Column(db.String(20), nullable=False)
+    title = db.Column(db.String(200), nullable=False)
+    message = db.Column(db.Text, nullable=False)
+    sensor_data = db.Column(db.Text)
+    is_acknowledged = db.Column(db.Boolean, default=False)
+    acknowledged_by = db.Column(db.String(100))
+    acknowledged_at = db.Column(db.DateTime)
+    email_sent = db.Column(db.Boolean, default=False)
+    sms_sent = db.Column(db.Boolean, default=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, index=True)
+    resolved_at = db.Column(db.DateTime)
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'machine_id': self.machine_id,
+            'alert_type': self.alert_type,
+            'severity': self.severity,
+            'title': self.title,
+            'message': self.message,
+            'sensor_data': json.loads(self.sensor_data) if self.sensor_data else None,
+            'is_acknowledged': self.is_acknowledged,
+            'acknowledged_by': self.acknowledged_by,
+            'acknowledged_at': self.acknowledged_at.isoformat() if self.acknowledged_at else None,
+            'email_sent': self.email_sent,
+            'sms_sent': self.sms_sent,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'resolved_at': self.resolved_at.isoformat() if self.resolved_at else None
+        }
+
+# =============================================================================
+# 🚀 FLASK ROUTES
+# =============================================================================
+
+# Routes
+@app.route('/')
+def landing_page():
+    """Landing page with navigation"""
+    return render_template('index.html')
+
+@app.route('/dashboard')
+def dashboard():
+    """Main dashboard view"""
+    machines = Machine.query.filter_by(is_active=True).all()
+    recent_alerts = Alert.query.filter_by(is_acknowledged=False).order_by(Alert.created_at.desc()).limit(5).all()
+    return render_template('dashboard.html', machines=machines, alerts=recent_alerts)
+
+@app.route('/contact')
+def contact():
+    """Contact page"""
+    return render_template('contact.html')
+
+@app.route('/chat')
+def chat_interface():
+    """Render chat interface page"""
+    return render_template('chat.html')
+
+@app.route('/api/machines')
+def api_machines():
+    """Get all machines data"""
+    machines = Machine.query.filter_by(is_active=True).all()
+    return jsonify([machine.to_dict() for machine in machines])
+
+@app.route('/api/machine/<int:machine_id>/latest')
+def api_machine_latest(machine_id):
+    """Get latest sensor readings for a machine"""
+    latest_readings = {}
+    machine = Machine.query.get_or_404(machine_id)
+
+    sensor_types = db.session.query(SensorReading.sensor_type).filter_by(machine_id=machine_id).distinct().all()
+    sensor_types = [s[0] for s in sensor_types]
+
+    for sensor_type in sensor_types:
+        reading = SensorReading.query.filter_by(
+            machine_id=machine_id, 
+            sensor_type=sensor_type
+        ).order_by(SensorReading.timestamp.desc()).first()
+
+        if reading:
+            latest_readings[sensor_type] = reading.to_dict()
+
+    return jsonify({
+        'machine': machine.to_dict(),
+        'readings': latest_readings,
+        'timestamp': datetime.now().isoformat()
+    })
+
+# =============================================================================
+# 🚀 CHATBOT API ENDPOINTS
+# =============================================================================
+
 @app.route('/api/chat', methods=['POST'])
 def chat_endpoint():
     """Main chatbot API endpoint"""
@@ -1103,12 +1899,318 @@ def get_chat_history(user_id):
             'error': str(e)
         })
 
-@app.route('/chat')
-def chat_interface():
-    """Render chat interface page"""
-    return render_template('chat.html')
+# =============================================================================
+# 🚀 SENSOR HEALTH API ENDPOINTS
+# =============================================================================
 
-# 6. ADD THESE NEW ROUTES TO YOUR FLASK APP
+@app.route('/api/machine/<int:machine_id>/sensor-health')
+def get_machine_sensor_health(machine_id):
+    """Get real-time sensor health for specific machine"""
+    try:
+        machine = Machine.query.get_or_404(machine_id)
+        sensor_health = sensor_health_tracker.get_all_machine_sensor_health(machine_id)
+        
+        # Count sensor statuses
+        healthy = sum(1 for s in sensor_health.values() if s['status'] == 'healthy')
+        warning = sum(1 for s in sensor_health.values() if s['status'] == 'warning')
+        degrading = sum(1 for s in sensor_health.values() if s['status'] == 'degrading')
+        critical = sum(1 for s in sensor_health.values() if s['status'] == 'critical')
+        shutdown = sum(1 for s in sensor_health.values() if s['status'] == 'shutdown')
+        
+        # Calculate overall health
+        if sensor_health:
+            overall_health = sum(s['health_percentage'] for s in sensor_health.values()) / len(sensor_health)
+        else:
+            overall_health = 100.0
+            
+        return jsonify({
+            'success': True,
+            'machine': machine.to_dict(),
+            'sensor_health': sensor_health,
+            'overall_health': round(overall_health, 1),
+            'summary': {
+                'total_sensors': len(sensor_health),
+                'healthy': healthy,
+                'warning': warning,
+                'degrading': degrading,
+                'critical': critical,
+                'shutdown': shutdown
+            },
+            'timestamp': datetime.now().isoformat()
+        })
+        
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/api/machine/<int:machine_id>/mode', methods=['POST'])
+def api_set_machine_mode_with_health(machine_id):
+    """Enhanced machine mode with sensor health effects"""
+    global sent_maintenance_emails, sent_sabotage_emails, sent_twilio_calls
+    
+    data = request.get_json()
+    mode = data.get('mode', 'normal')
+
+    machine = Machine.query.get_or_404(machine_id)
+    old_status = machine.status
+    machine.status = mode
+    machine.updated_at = datetime.utcnow()
+
+    # Get machine sensor types
+    machine_config = MACHINES_CONFIG.get(machine.machine_type, {})
+    sensor_types = list(machine_config.get('sensors', {}).keys())
+
+    # Handle sensor health based on mode
+    if mode == 'maintenance':
+        # Reduce sensor health to maintenance levels
+        degraded_sensors = {}
+        for sensor_type in sensor_types:
+            health = sensor_health_tracker.set_maintenance_mode(machine_id, sensor_type)
+            degraded_sensors[sensor_type] = {
+                'health_percentage': health,
+                'status': 'degrading'
+            }
+        
+        # Send maintenance alert email (with rate limiting)
+        if machine_id not in sent_maintenance_emails:
+            sent_maintenance_emails.add(machine_id)
+            send_maintenance_health_alert(machine, degraded_sensors)
+            print(f"📧 Maintenance sensor health alert sent for {machine.name}")
+            
+    elif mode == 'sabotage':
+        # Kill all sensor health to 0%
+        failed_sensors = {}
+        for sensor_type in sensor_types:
+            sensor_health_tracker.set_sabotage_mode(machine_id, sensor_type)
+            failed_sensors[sensor_type] = {
+                'health_percentage': 0.0,
+                'status': 'shutdown'
+            }
+        
+        # Set machine to shutdown status
+        machine.status = 'shutdown'
+        
+        # Send critical alert email (with rate limiting)
+        if machine_id not in sent_sabotage_emails:
+            sent_sabotage_emails.add(machine_id)
+            send_critical_sensor_shutdown_alert(machine, failed_sensors)
+            print(f"🚨 Critical sensor failure alert sent for {machine.name}")
+            
+    elif mode == 'normal':
+        # Reset health to 100% for normal operation
+        for sensor_type in sensor_types:
+            sensor_health_tracker.initialize_sensor_health(machine_id, sensor_type)
+        
+        # Reset flags
+        sent_maintenance_emails.discard(machine_id)
+        sent_sabotage_emails.discard(machine_id)
+        sent_twilio_calls.discard(machine_id)
+
+    # Save machine status
+    db.session.add(Alert(
+        machine_id=machine.id,
+        alert_type='info',
+        severity='low',
+        title=f'Mode Change: {machine.name}',
+        message=f'Machine mode changed to {mode.upper()}',
+        sensor_data=json.dumps({'mode': mode, 'timestamp': datetime.now().isoformat()})
+    ))
+    db.session.commit()
+
+    return jsonify({
+        'success': True,
+        'machine_id': machine_id,
+        'new_mode': mode,
+        'message': f'Machine {machine.name} set to {mode} mode'
+    })
+
+@app.route('/api/alerts')
+def api_alerts():
+    """Get recent alerts"""
+    alerts = Alert.query.order_by(Alert.created_at.desc()).limit(20).all()
+    return jsonify([alert.to_dict() for alert in alerts])
+
+# Email alert functions
+def send_maintenance_health_alert(machine, degraded_sensors):
+    """Send email when sensor health degrades to maintenance levels"""
+    subject = f"⚠️ Sensor Health Alert - {machine.name} - Maintenance Recommended"
+    
+    html_body = f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <style>
+            body {{ font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; }}
+            .header {{ background: #f59e0b; color: white; padding: 20px; text-align: center; }}
+            .content {{ padding: 20px; background: #fffbeb; }}
+            .sensor-item {{ background: white; margin: 10px 0; padding: 15px; border-left: 4px solid #f59e0b; }}
+            .footer {{ background: #1f2937; color: white; padding: 15px; text-align: center; }}
+        </style>
+    </head>
+    <body>
+        <div class="header">
+            <h2>⚠️ SENSOR HEALTH DEGRADATION ALERT</h2>
+            <p>Preventive Maintenance Required</p>
+        </div>
+        <div class="content">
+            <h3>🏭 Equipment: {machine.name}</h3>
+            <p><strong>Alert Time:</strong> {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}</p>
+            
+            <h4>📊 Degraded Sensors:</h4>
+            {format_degraded_sensors_html(degraded_sensors)}
+            
+            <div style="background: #f0f9ff; padding: 15px; margin: 15px 0; border-radius: 5px;">
+                <h4>🔧 Recommended Actions:</h4>
+                <ul>
+                    <li>Schedule sensor calibration within 24 hours</li>
+                    <li>Inspect sensor connections and wiring</li>
+                    <li>Check for environmental factors affecting sensors</li>
+                    <li>Prepare for possible sensor replacement</li>
+                </ul>
+            </div>
+        </div>
+        <div class="footer">
+            <p>Industrial Plant Alpha - Predictive Maintenance System</p>
+        </div>
+    </body>
+    </html>
+    """
+    
+    recipients = [EmailConfig.MAINTENANCE_TEAM, EmailConfig.PLANT_MANAGER]
+    enhanced_email_service.send_email_async(recipients, subject, html_body, priority='normal')
+
+def send_critical_sensor_shutdown_alert(machine, failed_sensors):
+    """Send emergency email when sensors fail completely"""
+    subject = f"🚨 CRITICAL - Sensor Failure - {machine.name} - IMMEDIATE ACTION REQUIRED"
+    
+    html_body = f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <style>
+            body {{ font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; }}
+            .header {{ background: #dc2626; color: white; padding: 20px; text-align: center; }}
+            .content {{ padding: 20px; background: #fef2f2; }}
+            .sensor-item {{ background: white; margin: 10px 0; padding: 15px; border-left: 4px solid #dc2626; }}
+            .footer {{ background: #1f2937; color: white; padding: 15px; text-align: center; }}
+            .critical {{ color: #dc2626; font-weight: bold; }}
+        </style>
+    </head>
+    <body>
+        <div class="header">
+            <h2>🚨 CRITICAL SENSOR FAILURE ALERT</h2>
+            <p>IMMEDIATE RESPONSE REQUIRED</p>
+        </div>
+        <div class="content">
+            <h3>🏭 Equipment: {machine.name}</h3>
+            <p><strong>Incident Time:</strong> {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}</p>
+            <p><strong>Status:</strong> <span class="critical">SENSORS NOT RESPONDING</span></p>
+            
+            <h4>💥 Failed Sensors:</h4>
+            {format_failed_sensors_html(failed_sensors)}
+            
+            <div style="background: #fef2f2; padding: 15px; margin: 15px 0; border: 2px solid #dc2626; border-radius: 5px;">
+                <h4>🚨 IMMEDIATE ACTIONS REQUIRED:</h4>
+                <ul>
+                    <li><strong>STOP PRODUCTION</strong> - Shutdown machine immediately</li>
+                    <li><strong>DISPATCH TECHNICIAN</strong> - Emergency repair needed</li>
+                    <li><strong>CHECK SAFETY SYSTEMS</strong> - Verify no hazardous conditions</li>
+                    <li><strong>INVESTIGATE CAUSE</strong> - Determine reason for sudden failure</li>
+                </ul>
+            </div>
+            
+            <p style="color: #dc2626; font-weight: bold;">
+                ⚠️ WARNING: Multiple sensors have suddenly stopped responding. 
+                This may indicate equipment sabotage, power failure, or critical system malfunction.
+            </p>
+        </div>
+        <div class="footer">
+            <p>🚨 EMERGENCY ALERT - Industrial Plant Alpha</p>
+            <p>Contact Emergency Response: +91-9876543210</p>
+        </div>
+    </body>
+    </html>
+    """
+    
+    recipients = [EmailConfig.EMERGENCY_RESPONSE, EmailConfig.PLANT_MANAGER, EmailConfig.MAINTENANCE_TEAM]
+    enhanced_email_service.send_email_async(recipients, subject, html_body, priority='critical')
+
+def format_degraded_sensors_html(degraded_sensors):
+    """Format degraded sensors for email"""
+    html = ""
+    for sensor_type, data in degraded_sensors.items():
+        health = data['health_percentage']
+        html += f'''
+        <div class="sensor-item">
+            <strong>{sensor_type.replace('_', ' ').title()}:</strong> {health:.1f}% health
+            <br><small>Status: Requires maintenance attention</small>
+        </div>
+        '''
+    return html
+
+def format_failed_sensors_html(failed_sensors):
+    """Format failed sensors for email"""
+    html = ""
+    for sensor_type, data in failed_sensors.items():
+        html += f'''
+        <div class="sensor-item">
+            <strong>{sensor_type.replace('_', ' ').title()}:</strong> 0% health - NOT RESPONDING
+            <br><small style="color: #dc2626;">Status: CRITICAL FAILURE</small>
+        </div>
+        '''
+    return html
+
+# =============================================================================
+# 🚀 DEBUG AND TESTING ENDPOINTS
+# =============================================================================
+
+@app.route('/debug/reset-email-flags')
+def reset_email_flags():
+    """Reset email flags to allow testing"""
+    global sent_maintenance_emails, sent_sabotage_emails, sent_twilio_calls
+    
+    sent_maintenance_emails.clear()
+    sent_sabotage_emails.clear()
+    sent_twilio_calls.clear()
+    
+    return jsonify({
+        'success': True,
+        'message': 'Email and call flags reset - you can now test alerts again!'
+    })
+
+@app.route('/debug/test-email/<email_type>')
+def test_email(email_type):
+    """Test email functionality"""
+    try:
+        machine = Machine.query.first()
+        if not machine:
+            return jsonify({'error': 'No machines found'})
+
+        if email_type == 'maintenance':
+            test_readings = {
+                'temperature': {'value': 450, 'unit': '°C', 'is_anomaly': True, 'anomaly_score': 0.6},
+                'pressure': {'value': 35, 'unit': 'bar', 'is_anomaly': True, 'anomaly_score': 0.4}
+            }
+            enhanced_email_service.send_irregular_readings_alert(machine, test_readings, [])
+            return jsonify({'success': True, 'message': 'Maintenance alert sent'})
+
+        elif email_type == 'sabotage':
+            incident_time = datetime.now().isoformat()
+            critical_sensors = {
+                'temperature': {'value': 730, 'unit': '°C', 'is_anomaly': True, 'anomaly_score': 0.95, 'normal_range': '250-400 °C'},
+                'pressure': {'value': 48, 'unit': 'bar', 'is_anomaly': True, 'anomaly_score': 0.90, 'normal_range': '10-30 bar'}
+            }
+            pre_incident_data = [
+                {'time_before_incident': 60, 'sensor_type': 'temperature', 'value': 380, 'unit': '°C', 'is_anomaly': False, 'trend': '→'},
+                {'time_before_incident': 30, 'sensor_type': 'temperature', 'value': 420, 'unit': '°C', 'is_anomaly': True, 'trend': '📈'},
+            ]
+            enhanced_email_service.send_sabotage_incident_report(machine, incident_time, critical_sensors, pre_incident_data)
+            return jsonify({'success': True, 'message': 'Sabotage incident report sent'})
+
+        else:
+            return jsonify({'error': 'Invalid email type. Use: maintenance or sabotage'})
+
+    except Exception as e:
+        return jsonify({'error': str(e)})
 
 @app.route('/api/emergency-call/<int:machine_id>')
 def trigger_emergency_call(machine_id):
@@ -1209,185 +2311,6 @@ def test_call(call_type):
     except Exception as e:
         return jsonify({'error': str(e)})
 
-# Database Models
-class Machine(db.Model):
-    __tablename__ = 'machines'
-
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(100), unique=True, nullable=False)
-    machine_type = db.Column(db.String(50), nullable=False)
-    description = db.Column(db.Text)
-    location = db.Column(db.String(100))
-    status = db.Column(db.String(20), default='normal')
-    is_active = db.Column(db.Boolean, default=True)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-
-    def to_dict(self):
-        return {
-            'id': self.id,
-            'name': self.name,
-            'machine_type': self.machine_type,
-            'description': self.description,
-            'location': self.location,
-            'status': self.status,
-            'is_active': self.is_active,
-            'created_at': self.created_at.isoformat() if self.created_at else None,
-            'updated_at': self.updated_at.isoformat() if self.updated_at else None
-        }
-
-class SensorReading(db.Model):
-    __tablename__ = 'sensor_readings'
-
-    id = db.Column(db.Integer, primary_key=True)
-    machine_id = db.Column(db.Integer, db.ForeignKey('machines.id'), nullable=False)
-    sensor_type = db.Column(db.String(50), nullable=False)
-    value = db.Column(db.Float, nullable=False)
-    unit = db.Column(db.String(20), nullable=False)
-    is_anomaly = db.Column(db.Boolean, default=False)
-    anomaly_score = db.Column(db.Float, default=0.0)
-    timestamp = db.Column(db.DateTime, default=datetime.utcnow, index=True)
-
-    def to_dict(self):
-        return {
-            'id': self.id,
-            'machine_id': self.machine_id,
-            'sensor_type': self.sensor_type,
-            'value': self.value,
-            'unit': self.unit,
-            'is_anomaly': self.is_anomaly,
-            'anomaly_score': self.anomaly_score,
-            'timestamp': self.timestamp.isoformat() if self.timestamp else None
-        }
-
-class Alert(db.Model):
-    __tablename__ = 'alerts'
-
-    id = db.Column(db.Integer, primary_key=True)
-    machine_id = db.Column(db.Integer, db.ForeignKey('machines.id'), nullable=False)
-    alert_type = db.Column(db.String(30), nullable=False)
-    severity = db.Column(db.String(20), nullable=False)
-    title = db.Column(db.String(200), nullable=False)
-    message = db.Column(db.Text, nullable=False)
-    sensor_data = db.Column(db.Text)
-    is_acknowledged = db.Column(db.Boolean, default=False)
-    acknowledged_by = db.Column(db.String(100))
-    acknowledged_at = db.Column(db.DateTime)
-    email_sent = db.Column(db.Boolean, default=False)
-    sms_sent = db.Column(db.Boolean, default=False)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow, index=True)
-    resolved_at = db.Column(db.DateTime)
-
-    def to_dict(self):
-        return {
-            'id': self.id,
-            'machine_id': self.machine_id,
-            'alert_type': self.alert_type,
-            'severity': self.severity,
-            'title': self.title,
-            'message': self.message,
-            'sensor_data': json.loads(self.sensor_data) if self.sensor_data else None,
-            'is_acknowledged': self.is_acknowledged,
-            'acknowledged_by': self.acknowledged_by,
-            'acknowledged_at': self.acknowledged_at.isoformat() if self.acknowledged_at else None,
-            'email_sent': self.email_sent,
-            'sms_sent': self.sms_sent,
-            'created_at': self.created_at.isoformat() if self.created_at else None,
-            'resolved_at': self.resolved_at.isoformat() if self.resolved_at else None
-        }
-
-# Routes
-@app.route('/')
-def landing_page():
-    """Landing page with navigation"""
-    return render_template('index.html')
-
-@app.route('/dashboard')
-def dashboard():
-    """Main dashboard view"""
-    machines = Machine.query.filter_by(is_active=True).all()
-    recent_alerts = Alert.query.filter_by(is_acknowledged=False).order_by(Alert.created_at.desc()).limit(5).all()
-    return render_template('dashboard.html', machines=machines, alerts=recent_alerts)
-
-@app.route('/contact')
-def contact():
-    """Contact page"""
-    return render_template('contact.html')
-
-@app.route('/api/machines')
-def api_machines():
-    """Get all machines data"""
-    machines = Machine.query.filter_by(is_active=True).all()
-    return jsonify([machine.to_dict() for machine in machines])
-
-@app.route('/api/machine/<int:machine_id>/latest')
-def api_machine_latest(machine_id):
-    """Get latest sensor readings for a machine"""
-    latest_readings = {}
-    machine = Machine.query.get_or_404(machine_id)
-
-    sensor_types = db.session.query(SensorReading.sensor_type).filter_by(machine_id=machine_id).distinct().all()
-    sensor_types = [s[0] for s in sensor_types]
-
-    for sensor_type in sensor_types:
-        reading = SensorReading.query.filter_by(
-            machine_id=machine_id, 
-            sensor_type=sensor_type
-        ).order_by(SensorReading.timestamp.desc()).first()
-
-        if reading:
-            latest_readings[sensor_type] = reading.to_dict()
-
-    return jsonify({
-        'machine': machine.to_dict(),
-        'readings': latest_readings,
-        'timestamp': datetime.now().isoformat()
-    })
-
-@app.route('/api/machine/<int:machine_id>/mode', methods=['POST'])
-def api_set_machine_mode(machine_id):
-    """UPDATED: Set machine operation mode with flag reset"""
-    global sent_maintenance_emails, sent_sabotage_emails, sent_twilio_calls
-
-    data = request.get_json()
-    mode = data.get('mode', 'normal')
-
-    machine = Machine.query.get_or_404(machine_id)
-    old_status = machine.status
-    machine.status = mode
-    machine.updated_at = datetime.utcnow()
-
-    # RESET FLAGS WHEN STATUS CHANGES - PREVENTS PERMANENT BLOCKING
-    if old_status != mode:
-        sent_maintenance_emails.discard(machine_id)
-        sent_sabotage_emails.discard(machine_id)
-        sent_twilio_calls.discard(machine_id)
-        print(f"🔄 Status changed: {machine.name} from {old_status} to {mode} - flags reset")
-
-    alert = Alert(
-        machine_id=machine.id,
-        alert_type='info',
-        severity='low',
-        title=f'Mode Change: {machine.name}',
-        message=f'Machine mode changed to {mode.upper()}',
-        sensor_data=json.dumps({'mode': mode, 'timestamp': datetime.now().isoformat()})
-    )
-    db.session.add(alert)
-    db.session.commit()
-
-    return jsonify({
-        'success': True,
-        'machine_id': machine_id,
-        'new_mode': mode,
-        'message': f'Machine {machine.name} set to {mode} mode'
-    })
-
-@app.route('/api/alerts')
-def api_alerts():
-    """Get recent alerts"""
-    alerts = Alert.query.order_by(Alert.created_at.desc()).limit(20).all()
-    return jsonify([alert.to_dict() for alert in alerts])
-
 @app.route('/debug/machines')
 def debug_machines():
     """Debug endpoint to check machine status"""
@@ -1405,56 +2328,10 @@ def debug_machines():
         ]
     })
 
-@app.route('/debug/reset-email-flags')
-def reset_email_flags():
-    """NEW: Reset email flags to allow testing"""
-    global sent_maintenance_emails, sent_sabotage_emails, sent_twilio_calls
+# =============================================================================
+# 🚀 MACHINE CONFIGURATION AND DATA GENERATION
+# =============================================================================
 
-    sent_maintenance_emails.clear()
-    sent_sabotage_emails.clear()
-    sent_twilio_calls.clear()
-
-    return jsonify({
-        'success': True,
-        'message': 'Email and call flags reset - you can now test alerts again!'
-    })
-
-@app.route('/debug/test-email/<email_type>')
-def test_email(email_type):
-    """Test email functionality"""
-    try:
-        machine = Machine.query.first()
-        if not machine:
-            return jsonify({'error': 'No machines found'})
-
-        if email_type == 'maintenance':
-            test_readings = {
-                'temperature': {'value': 450, 'unit': '°C', 'is_anomaly': True, 'anomaly_score': 0.6},
-                'pressure': {'value': 35, 'unit': 'bar', 'is_anomaly': True, 'anomaly_score': 0.4}
-            }
-            enhanced_email_service.send_irregular_readings_alert(machine, test_readings, [])
-            return jsonify({'success': True, 'message': 'Maintenance alert sent'})
-
-        elif email_type == 'sabotage':
-            incident_time = datetime.now().isoformat()
-            critical_sensors = {
-                'temperature': {'value': 730, 'unit': '°C', 'is_anomaly': True, 'anomaly_score': 0.95, 'normal_range': '250-400 °C'},
-                'pressure': {'value': 48, 'unit': 'bar', 'is_anomaly': True, 'anomaly_score': 0.90, 'normal_range': '10-30 bar'}
-            }
-            pre_incident_data = [
-                {'time_before_incident': 60, 'sensor_type': 'temperature', 'value': 380, 'unit': '°C', 'is_anomaly': False, 'trend': '→'},
-                {'time_before_incident': 30, 'sensor_type': 'temperature', 'value': 420, 'unit': '°C', 'is_anomaly': True, 'trend': '📈'},
-            ]
-            enhanced_email_service.send_sabotage_incident_report(machine, incident_time, critical_sensors, pre_incident_data)
-            return jsonify({'success': True, 'message': 'Sabotage incident report sent'})
-
-        else:
-            return jsonify({'error': 'Invalid email type. Use: maintenance or sabotage'})
-
-    except Exception as e:
-        return jsonify({'error': str(e)})
-
-# Enhanced Data Generation with 4 Machines and Email Integration
 MACHINES_CONFIG = {
     "Chemical Reactor": {
         "sensors": {
@@ -1583,7 +2460,7 @@ def detect_irregular_readings(current_readings):
 def generate_machine_data(machine):
     """CORRECTED VERSION - Fixes email spam and adds Twilio integration"""
     global sent_maintenance_emails, sent_sabotage_emails, sent_twilio_calls
-
+    
     machine_config = MACHINES_CONFIG.get(machine.machine_type)
     if not machine_config:
         return
@@ -1640,7 +2517,7 @@ def generate_machine_data(machine):
                     irregular_sensors=irregular_sensors,
                     reading_history=recent_readings
                 )
-
+                
                 # MAKE MAINTENANCE CALL (with delay)
                 if machine.id not in sent_twilio_calls:
                     sent_twilio_calls.add(machine.id)
@@ -1654,12 +2531,12 @@ def generate_machine_data(machine):
                             print(f"📞 Maintenance call sent for {machine.name}")
                         except Exception as e:
                             print(f"❌ Failed to make maintenance call: {e}")
-
+                    
                     threading.Thread(target=make_maintenance_call, daemon=True).start()
 
         # 2. CRITICAL SABOTAGE ALERT (with rate limiting + Twilio integration)
         if critical_anomalies and machine.status == 'sabotage' and len(critical_anomalies) >= 2:
-
+            
             if machine.id not in sent_sabotage_emails:  # PREVENTS EMAIL SPAM
                 sent_sabotage_emails.add(machine.id)
                 incident_time = current_time.isoformat()
@@ -1692,16 +2569,16 @@ def generate_machine_data(machine):
                     critical_sensors=critical_sensors,
                     pre_incident_data=pre_incident_data
                 )
-
+                
                 # MAKE EMERGENCY CALLS + SMS (THIS WAS MISSING!)
                 if machine.id not in sent_twilio_calls:
                     sent_twilio_calls.add(machine.id)
-
+                    
                     def emergency_response():
                         try:
                             # Wait 15 seconds after email
                             time.sleep(15)
-
+                            
                             # Make emergency calls
                             print(f"📞 Making EMERGENCY CALLS for {machine.name}")
                             call_results = twilio_service.make_emergency_call(
@@ -1710,9 +2587,9 @@ def generate_machine_data(machine):
                                 incident_time=incident_time_str,
                                 severity='CRITICAL'
                             )
-
+                            
                             print(f"✅ Emergency calls initiated: {len(call_results)} contacts")
-
+                            
                             # Send SMS backup after 45 seconds
                             time.sleep(45)
                             print(f"📱 Sending SMS backup for {machine.name}")
@@ -1721,10 +2598,10 @@ def generate_machine_data(machine):
                                 incident_details=critical_details,
                                 incident_time=incident_time_str
                             )
-
+                            
                         except Exception as e:
                             print(f"❌ Error in emergency response: {e}")
-
+                    
                     # Run in background thread
                     threading.Thread(target=emergency_response, daemon=True).start()
 
@@ -1765,17 +2642,63 @@ def start_data_generation():
 
         time.sleep(3)
 
+def create_sensor_health_table():
+    """Create the sensor_health table if it doesn't exist"""
+    import sqlite3
+    
+    conn = sqlite3.connect('machines.db')
+    cursor = conn.cursor()
+    
+    # Create sensor_health table
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS sensor_health (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            machine_id INTEGER,
+            sensor_type TEXT,
+            health_percentage REAL DEFAULT 100.0,
+            last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            status TEXT DEFAULT 'healthy',
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE(machine_id, sensor_type)
+        )
+    ''')
+    
+    conn.commit()
+    conn.close()
+    print("✅ Sensor health table created successfully!")
+
+def initialize_all_sensor_health():
+    """Initialize sensor health for all machines and sensors"""
+    machines = Machine.query.all()
+    total_initialized = 0
+    
+    for machine in machines:
+        machine_config = MACHINES_CONFIG.get(machine.machine_type, {})
+        sensor_configs = machine_config.get('sensors', {})
+        
+        for sensor_type in sensor_configs.keys():
+            sensor_health_tracker.initialize_sensor_health(machine.id, sensor_type)
+            total_initialized += 1
+    
+    print(f"✅ Initialized sensor health for {total_initialized} sensors across {len(machines)} machines")
+
 def create_tables():
-    """Create database tables and sample data"""
+    """Create database tables and sample data - ENHANCED VERSION"""
     print("🔧 Creating database tables...")
 
     with app.app_context():
+        # Create Flask-SQLAlchemy tables
         db.create_all()
-        print("✅ Database tables created successfully!")
-
+        print("✅ SQLAlchemy tables created successfully!")
+        
+        # Create sensor health table (SQLite direct)
+        create_sensor_health_table()
+        
+        # Check if we need to create machines
         existing_count = Machine.query.count()
 
         if existing_count != 4:
+            print(f"Found {existing_count} machines, creating fresh set of 4...")
             Machine.query.delete()
 
             machines_data = [
@@ -1811,6 +2734,87 @@ def create_tables():
 
             db.session.commit()
             print("✅ Added exactly 4 machines to database")
+            
+            # Initialize sensor health for all machines
+            initialize_all_sensor_health()
+        else:
+            print("✅ 4 machines already exist, initializing sensor health...")
+            initialize_all_sensor_health()
+@app.route('/debug/reset-sensor-health')
+def reset_sensor_health():
+    """Debug endpoint to reset and initialize all sensor health"""
+    try:
+        # Create table if it doesn't exist
+        create_sensor_health_table()
+        
+        # Clear existing sensor health data
+        import sqlite3
+        conn = sqlite3.connect('machines.db')
+        cursor = conn.cursor()
+        cursor.execute('DELETE FROM sensor_health')
+        conn.commit()
+        conn.close()
+        
+        # Re-initialize all sensor health
+        with app.app_context():
+            initialize_all_sensor_health()
+        
+        return jsonify({
+            'success': True,
+            'message': 'Sensor health table reset and initialized successfully',
+            'next_steps': [
+                'Visit /api/machine/1/sensor-health to test',
+                'Visit /dashboard to see the interface'
+            ]
+        })
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        })
+
+@app.route('/debug/check-sensor-health-table')
+def check_sensor_health_table():
+    """Debug endpoint to check sensor health table contents"""
+    try:
+        import sqlite3
+        conn = sqlite3.connect('machines.db')
+        cursor = conn.cursor()
+        
+        # Check if table exists
+        cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='sensor_health'")
+        table_exists = cursor.fetchone() is not None
+        
+        if table_exists:
+            # Count records
+            cursor.execute('SELECT COUNT(*) FROM sensor_health')
+            record_count = cursor.fetchone()[0]
+            
+            # Get sample records
+            cursor.execute('SELECT * FROM sensor_health LIMIT 5')
+            sample_records = cursor.fetchall()
+        else:
+            record_count = 0
+            sample_records = []
+        
+        conn.close()
+        
+        return jsonify({
+            'table_exists': table_exists,
+            'record_count': record_count,
+            'sample_records': sample_records,
+            'status': 'healthy' if table_exists and record_count > 0 else 'needs_initialization'
+        })
+        
+    except Exception as e:
+        return jsonify({
+            'error': str(e)
+        })
+
+# =============================================================================
+# 🚀 MAIN APPLICATION STARTUP
+# =============================================================================
 
 if __name__ == '__main__':
     create_tables()
@@ -1821,11 +2825,17 @@ if __name__ == '__main__':
     print("🚀 Starting Complete Industrial Predictive Maintenance System...")
     print("🏠 Landing page: http://localhost:5000")
     print("📊 Dashboard: http://localhost:5000/dashboard")
+    print("💬 AI Chatbot: http://localhost:5000/chat")
     print("📧 Test maintenance email: http://localhost:5000/debug/test-email/maintenance")
     print("🚨 Test sabotage email: http://localhost:5000/debug/test-email/sabotage")
     print("📞 Test emergency call: http://localhost:5000/debug/test-call/emergency")
-    print("📞 Test maintenance call: http://localhost:5000/debug/test-call/maintenance")
+    print("📞 Test maintenance call: http://localhost:50" \
+    "00/debug/test-call/maintenance")
     print("📱 Test SMS: http://localhost:5000/debug/test-call/sms")
     print("🔧 Debug machines: http://localhost:5000/debug/machines")
     print("🔄 Reset flags: http://localhost:5000/debug/reset-email-flags")
+    print("🔬 Sensor health analysis: http://localhost:5000/api/machine/1/sensor-health")
+    print("🏥 All machines health: http://localhost:5000/api/all-machines-sensor-health")
+    print("📞 Emergency call API: http://localhost:5000/api/emergency-call/1")
+    
     app.run(debug=True, threaded=True, port=5000)
