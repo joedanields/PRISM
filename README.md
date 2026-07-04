@@ -3,7 +3,6 @@
 PRISM is a comprehensive, AI-driven predictive maintenance and safety monitoring system for industrial environments. It simulates real-time sensor data from various industrial machines, detects anomalies, and triggers intelligent alerts, including detailed emails, emergency calls, and SMS notifications. The system also features an AI-powered chatbot for interactive diagnostics and operational support.
 
 ## Key Features
-
 - **Real-time Machine Simulation**: Generates continuous sensor data for four distinct types of industrial machines.
 - **Multiple Machine Modes**: Supports different operational modes for each machine, including `normal`, `maintenance`, and `sabotage`, each with unique data generation patterns.
 - **Advanced Anomaly Detection**: Implements a rule-based system to detect deviations from normal operating parameters and calculates an anomaly score.
