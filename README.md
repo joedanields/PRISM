@@ -42,8 +42,8 @@ The simulation includes four pre-configured industrial machines, each with a uni
 ### 1. Clone the Repository
 
 ```bash
-git clone <repository-url>
-cd <repository-directory>
+git clone https://github.com/joedanields/PRISM
+cd PRISM
 ```
 
 ### 2. Install Dependencies
