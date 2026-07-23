@@ -134,6 +134,9 @@ celerybeat.pid
 # SageMath parsed files
 *.sage.py
 
+# PRISM generated state
+machines.db
+
 # Environments
 .env
 .envrc
