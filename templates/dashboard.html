@@ -971,14 +971,110 @@
         }
 
         function startMachineLiveUpdates(machineId) {
-            // Update every 2 seconds for real-time feel
-            updateIntervals[machineId] = setInterval(() => {
+            // F16: Use SSE for real-time push, fall back to polling
+            if (typeof(EventSource) !== 'undefined') {
+                startSSEStream(machineId);
+            } else {
+                // Fallback: old polling approach
+                updateIntervals[machineId] = setInterval(() => {
+                    updateMachineLiveData(machineId);
+                    updateMachineHealth(machineId);
+                }, 2000);
                 updateMachineLiveData(machineId);
-                updateMachineHealth(machineId);
-            }, 2000);
-            
-            // Initial load
-            updateMachineLiveData(machineId);
+            }
+        }
+
+        // F16: SSE real-time push with auto-reconnect
+        let sseConnection = null;
+        let sseReconnectDelay = 1000;
+        const SSE_MAX_DELAY = 30000;
+
+        function startSSEStream(machineId) {
+            if (sseConnection) {
+                sseConnection.close();
+            }
+            const url = `/api/events?machine_id=${machineId}&poll=3`;
+            sseConnection = new EventSource(url);
+
+            sseConnection.addEventListener('reading', function(e) {
+                try {
+                    const data = JSON.parse(e.data);
+                    displayLiveSensorDataFromSSE(machineId, data.readings);
+                    updateSystemMetrics();
+                    sseReconnectDelay = 1000; // reset backoff on success
+                } catch(err) {
+                    console.error('SSE reading parse error:', err);
+                }
+            });
+
+            sseConnection.addEventListener('alert', function(e) {
+                try {
+                    const alert = JSON.parse(e.data);
+                    showNotification(`${alert.severity.toUpperCase()}: ${alert.title}`, alert.severity);
+                    refreshAlerts();
+                } catch(err) {
+                    console.error('SSE alert parse error:', err);
+                }
+            });
+
+            sseConnection.addEventListener('health', function(e) {
+                try {
+                    const data = JSON.parse(e.data);
+                    updateSensorHealthUI(data.machine_id, data.sensor_type, data);
+                } catch(err) {
+                    console.error('SSE health parse error:', err);
+                }
+            });
+
+            sseConnection.addEventListener('heartbeat', function(e) {
+                // connection alive — no action needed
+            });
+
+            sseConnection.addEventListener('error', function(e) {
+                console.warn('SSE error event:', e.data);
+            });
+
+            sseConnection.onerror = function() {
+                sseConnection.close();
+                // Auto-reconnect with exponential backoff
+                console.warn(`SSE disconnected, reconnecting in ${sseReconnectDelay}ms...`);
+                setTimeout(() => {
+                    sseReconnectDelay = Math.min(sseReconnectDelay * 2, SSE_MAX_DELAY);
+                    startSSEStream(machineId);
+                }, sseReconnectDelay);
+            };
+        }
+
+        function displayLiveSensorDataFromSSE(machineId, readings) {
+            const sensorsContainer = document.getElementById(`sensors-${machineId}`);
+            if (!sensorsContainer || !readings) return;
+
+            let html = '';
+            let anomalyCount = 0;
+
+            readings.forEach(reading => {
+                const isAnomaly = reading.is_anomaly;
+                const sensorClass = isAnomaly ? 'sensor-anomaly' : 'sensor-normal';
+                if (isAnomaly) anomalyCount++;
+
+                html += `
+                    <div class="sensor-card ${sensorClass}">
+                        <div class="sensor-name">${reading.sensor_type}</div>
+                        <div class="sensor-value">${reading.value.toFixed(1)} ${reading.unit}</div>
+                        <div class="sensor-score">Score: ${reading.anomaly_score.toFixed(3)}</div>
+                        <div class="sensor-source">${reading.source || 'simulator'}</div>
+                    </div>
+                `;
+            });
+
+            sensorsContainer.innerHTML = html;
+
+            // Update anomaly badge
+            const badge = document.getElementById(`anomaly-badge-${machineId}`);
+            if (badge) {
+                badge.textContent = anomalyCount;
+                badge.style.display = anomalyCount > 0 ? 'inline' : 'none';
+            }
         }
 
         function updateMachineLiveData(machineId) {
