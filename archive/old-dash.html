@@ -1,0 +1,750 @@
+<!-- <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Industrial Plant Alpha - Predictive Maintenance Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #2563eb;
+            --success-color: #059669;
+            --warning-color: #d97706;
+            --danger-color: #dc2626;
+            --info-color: #0891b2;
+        }
+
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .dashboard-container {
+            padding: 20px;
+        }
+
+        .header-section {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 25px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        .machine-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+            border-left: 5px solid var(--primary-color);
+            transition: all 0.3s ease;
+        }
+
+        .machine-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.2);
+        }
+
+        .machine-card.status-normal { border-left-color: var(--success-color); }
+        .machine-card.status-maintenance { border-left-color: var(--warning-color); }
+        .machine-card.status-sabotage { border-left-color: var(--danger-color); }
+
+        .status-badge {
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .status-normal { background: var(--success-color); color: white; }
+        .status-maintenance { background: var(--warning-color); color: white; }
+        .status-sabotage { background: var(--danger-color); color: white; animation: pulse 2s infinite; }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.7; }
+            100% { opacity: 1; }
+        }
+
+        .sensor-health-section {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 25px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        .health-card {
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 15px;
+            border-left: 4px solid var(--info-color);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .health-card:hover {
+            transform: translateX(5px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+        }
+
+        .health-card.health-excellent { border-left-color: var(--success-color); }
+        .health-card.health-good { border-left-color: #22c55e; }
+        .health-card.health-degrading { border-left-color: var(--warning-color); }
+        .health-card.health-critical { border-left-color: var(--danger-color); }
+
+        .health-score {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 0;
+        }
+
+        .health-score.excellent { color: var(--success-color); }
+        .health-score.good { color: #22c55e; }
+        .health-score.degrading { color: var(--warning-color); }
+        .health-score.critical { color: var(--danger-color); }
+
+        .sensor-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .sensor-item {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            border: 2px solid #e2e8f0;
+            transition: all 0.3s ease;
+        }
+
+        .sensor-item:hover {
+            border-color: var(--primary-color);
+            transform: scale(1.02);
+        }
+
+        .sensor-healthy { border-color: var(--success-color); }
+        .sensor-degrading { border-color: var(--warning-color); }
+        .sensor-critical { border-color: var(--danger-color); }
+
+        .system-overview {
+            background: linear-gradient(135deg, var(--primary-color) 0%, #1e40af 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+        }
+
+        .stat-item {
+            text-align: center;
+            padding: 15px;
+        }
+
+        .stat-number {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+
+        .btn-machine {
+            padding: 8px 16px;
+            border-radius: 20px;
+            border: none;
+            font-weight: 500;
+            margin: 5px;
+            transition: all 0.3s ease;
+        }
+
+        .btn-normal { background: var(--success-color); color: white; }
+        .btn-maintenance { background: var(--warning-color); color: white; }
+        .btn-sabotage { background: var(--danger-color); color: white; }
+
+        .btn-machine:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .modal-content {
+            border-radius: 15px;
+            border: none;
+        }
+
+        .modal-header {
+            background: linear-gradient(135deg, var(--primary-color) 0%, #1e40af 100%);
+            color: white;
+            border-radius: 15px 15px 0 0;
+        }
+
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 20px;
+            background: var(--success-color);
+            color: white;
+            border-radius: 8px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            z-index: 1000;
+            display: none;
+        }
+
+        .drift-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-left: 8px;
+        }
+
+        .drift-none { background: var(--success-color); }
+        .drift-detected { background: var(--warning-color); animation: blink 1s infinite; }
+
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0.3; }
+        }
+
+        .cost-savings {
+            background: linear-gradient(135deg, #059669 0%, #047857 100%);
+            color: white;
+            padding: 10px 15px;
+            border-radius: 8px;
+            margin-top: 10px;
+            font-weight: 600;
+        }
+
+        .recommendations {
+            background: #f0f9ff;
+            border-left: 4px solid var(--info-color);
+            padding: 15px;
+            margin-top: 15px;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .recommendations ul {
+            margin-bottom: 0;
+        }
+
+        .recommendations li {
+            margin-bottom: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <!-- Header Section -->
+        <div class="header-section">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h1 class="mb-2">🏭 Industrial Plant Alpha</h1>
+                    <p class="text-muted mb-0">AI-Powered Predictive Maintenance System with Advanced Sensor Health Monitoring</p>
+                </div>
+                <div class="col-md-4 text-end">
+                    <div class="text-muted">
+                        <i class="fas fa-clock"></i> <span id="currentTime"></span><br>
+                        <small>Last Updated: <span id="lastUpdate"></span></small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- System Overview -->
+        <div class="system-overview">
+            <div class="row" id="systemOverview">
+                <div class="col-md-3 stat-item">
+                    <div class="stat-number" id="totalMachines">4</div>
+                    <div class="stat-label">Active Machines</div>
+                </div>
+                <div class="col-md-3 stat-item">
+                    <div class="stat-number" id="totalSensors">16</div>
+                    <div class="stat-label">Monitored Sensors</div>
+                </div>
+                <div class="col-md-3 stat-item">
+                    <div class="stat-number" id="healthySensors">14</div>
+                    <div class="stat-label">Healthy Sensors</div>
+                </div>
+                <div class="col-md-3 stat-item">
+                    <div class="stat-number" id="potentialSavings">₹2.5L</div>
+                    <div class="stat-label">Potential Savings</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Machine Status Cards -->
+        <div class="row" id="machinesContainer">
+            <!-- Machine cards will be loaded here -->
+        </div>
+
+        <!-- Advanced Sensor Health Monitoring Section -->
+        <div class="sensor-health-section">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h3><i class="fas fa-heartbeat text-primary"></i> Advanced Sensor Health Monitoring</h3>
+                <div>
+                    <button class="btn btn-outline-primary btn-sm" onclick="refreshSensorHealth()">
+                        <i class="fas fa-sync-alt"></i> Refresh
+                    </button>
+                    <button class="btn btn-primary btn-sm" onclick="showSystemHealth()">
+                        <i class="fas fa-chart-line"></i> System Overview
+                    </button>
+                </div>
+            </div>
+
+            <div class="row" id="sensorHealthContainer">
+                <!-- Sensor health data will be loaded here -->
+            </div>
+        </div>
+
+        <!-- Recent Alerts Section -->
+        <div class="sensor-health-section">
+            <h3><i class="fas fa-exclamation-triangle text-warning"></i> Recent Alerts</h3>
+            <div id="alertsContainer">
+                <!-- Alerts will be loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Sensor Health Detail Modal -->
+    <div class="modal fade" id="sensorHealthModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">🔬 Detailed Sensor Health Analysis</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="modalBody">
+                    <!-- Modal content will be loaded here -->
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" onclick="downloadHealthReport()">
+                        <i class="fas fa-download"></i> Download Report
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification -->
+    <div class="notification" id="notification"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Global variables
+        let machines = [];
+        let sensorHealthData = {};
+
+        // Initialize dashboard
+        document.addEventListener('DOMContentLoaded', function() {
+            updateTime();
+            loadMachines();
+            loadSensorHealth();
+            loadAlerts();
+            
+            // Set up auto-refresh
+            setInterval(updateTime, 1000);
+            setInterval(loadMachines, 10000);
+            setInterval(loadSensorHealth, 30000);
+            setInterval(loadAlerts, 15000);
+        });
+
+        // Update current time
+        function updateTime() {
+            const now = new Date();
+            document.getElementById('currentTime').textContent = now.toLocaleTimeString();
+            document.getElementById('lastUpdate').textContent = now.toLocaleString();
+        }
+
+        // Load machines data
+        async function loadMachines() {
+            try {
+                const response = await fetch('/api/machines');
+                machines = await response.json();
+                displayMachines(machines);
+            } catch (error) {
+                console.error('Error loading machines:', error);
+                showNotification('Error loading machine data', 'error');
+            }
+        }
+
+        // Display machines
+        function displayMachines(machines) {
+            const container = document.getElementById('machinesContainer');
+            let html = '';
+
+            machines.forEach(machine => {
+                const statusClass = `status-${machine.status}`;
+                html += `
+                <div class="col-md-6 col-lg-3">
+                    <div class="machine-card ${statusClass}">
+                        <div class="d-flex justify-content-between align-items-start mb-3">
+                            <h5 class="mb-0">${machine.name}</h5>
+                            <span class="status-badge ${statusClass}">${machine.status}</span>
+                        </div>
+                        
+                        <p class="text-muted mb-2">${machine.machine_type}</p>
+                        <p class="small mb-3">${machine.description}</p>
+                        
+                        <div class="mb-3">
+                            <small class="text-muted"><i class="fas fa-map-marker-alt"></i> ${machine.location}</small>
+                        </div>
+
+                        <div class="d-flex gap-2 mb-3">
+                            <button class="btn btn-normal btn-sm" onclick="setMachineMode(${machine.id}, 'normal')">Normal</button>
+                            <button class="btn btn-maintenance btn-sm" onclick="setMachineMode(${machine.id}, 'maintenance')">Maintenance</button>
+                            <button class="btn btn-sabotage btn-sm" onclick="setMachineMode(${machine.id}, 'sabotage')">Sabotage</button>
+                        </div>
+
+                        <button class="btn btn-primary btn-sm w-100" onclick="showSensorHealth(${machine.id})">
+                            <i class="fas fa-heartbeat"></i> Sensor Health
+                        </button>
+                    </div>
+                </div>`;
+            });
+
+            container.innerHTML = html;
+        }
+
+        // Load sensor health data
+        async function loadSensorHealth() {
+            try {
+                const response = await fetch('/api/all-machines-sensor-health');
+                const data = await response.json();
+                
+                if (data.success) {
+                    sensorHealthData = data;
+                    displaySensorHealth(data);
+                    updateSystemOverview(data.system_summary);
+                }
+            } catch (error) {
+                console.error('Error loading sensor health:', error);
+                showNotification('Error loading sensor health data', 'error');
+            }
+        }
+
+        // Display sensor health
+        function displaySensorHealth(data) {
+            const container = document.getElementById('sensorHealthContainer');
+            let html = '';
+
+            // System summary alert
+            const summary = data.system_summary;
+            const alertClass = summary.critical_sensors > 0 ? 'danger' : 
+                             summary.degrading_sensors > 0 ? 'warning' : 'success';
+            
+            html += `
+            <div class="col-12 mb-3">
+                <div class="alert alert-${alertClass} d-flex align-items-center">
+                    <i class="fas fa-info-circle me-2"></i>
+                    <strong>System Status:</strong>
+                    ${summary.total_sensors} sensors monitored | 
+                    🟢 ${summary.healthy_sensors} healthy | 
+                    🟡 ${summary.degrading_sensors} degrading | 
+                    🔴 ${summary.critical_sensors} critical
+                    ${summary.total_potential_savings > 0 ? ` | 💰 ₹${summary.total_potential_savings.toLocaleString()} potential savings` : ''}
+                </div>
+            </div>`;
+
+            // Individual machine health cards
+            Object.entries(data.machines_health).forEach(([machineId, machineData]) => {
+                const healthPercentage = Math.round(machineData.overall_health * 100);
+                let healthClass, healthLabel;
+
+                if (healthPercentage >= 80) {
+                    healthClass = 'excellent';
+                    healthLabel = 'Excellent';
+                } else if (healthPercentage >= 60) {
+                    healthClass = 'good';
+                    healthLabel = 'Good';
+                } else if (healthPercentage >= 40) {
+                    healthClass = 'degrading';
+                    healthLabel = 'Degrading';
+                } else {
+                    healthClass = 'critical';
+                    healthLabel = 'Critical';
+                }
+
+                html += `
+                <div class="col-md-6 col-lg-3">
+                    <div class="health-card health-${healthClass}">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <h6 class="mb-0">${machineData.name}</h6>
+                            <small class="text-muted">${machineData.sensor_count} sensors</small>
+                        </div>
+                        
+                        <div class="text-center mb-3">
+                            <div class="health-score ${healthClass}">${healthPercentage}%</div>
+                            <small class="text-muted">${healthLabel} Health</small>
+                        </div>
+
+                        <div class="sensor-grid">
+                            <div class="text-center">
+                                <div class="text-success fw-bold">${machineData.healthy_sensors}</div>
+                                <small>Healthy</small>
+                            </div>
+                            <div class="text-center">
+                                <div class="text-warning fw-bold">${machineData.degrading_sensors}</div>
+                                <small>Degrading</small>
+                            </div>
+                            <div class="text-center">
+                                <div class="text-danger fw-bold">${machineData.critical_sensors}</div>
+                                <small>Critical</small>
+                            </div>
+                        </div>
+
+                        ${machineData.potential_savings > 0 ? `
+                        <div class="cost-savings">
+                            <i class="fas fa-coins"></i> Savings: ₹${machineData.potential_savings.toLocaleString()}
+                        </div>` : ''}
+
+                        <button class="btn btn-outline-primary btn-sm w-100 mt-3" onclick="showDetailedSensorHealth(${machineId})">
+                            <i class="fas fa-search"></i> Detailed Analysis
+                        </button>
+                    </div>
+                </div>`;
+            });
+
+            container.innerHTML = html;
+        }
+
+        // Update system overview
+        function updateSystemOverview(summary) {
+            document.getElementById('totalMachines').textContent = summary.total_machines;
+            document.getElementById('totalSensors').textContent = summary.total_sensors;
+            document.getElementById('healthySensors').textContent = summary.healthy_sensors;
+            document.getElementById('potentialSavings').textContent = `₹${(summary.total_potential_savings / 100000).toFixed(1)}L`;
+        }
+
+        // Show detailed sensor health
+        async function showDetailedSensorHealth(machineId) {
+            try {
+                const response = await fetch(`/api/sensor-health/${machineId}`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    displaySensorHealthModal(data);
+                }
+            } catch (error) {
+                console.error('Error loading detailed sensor health:', error);
+                showNotification('Error loading detailed sensor health', 'error');
+            }
+        }
+
+        // Display sensor health modal
+        function displaySensorHealthModal(data) {
+            const modalTitle = document.querySelector('#sensorHealthModal .modal-title');
+            const modalBody = document.getElementById('modalBody');
+
+            modalTitle.innerHTML = `🔬 Sensor Health: ${data.machine.name}`;
+
+            let html = `
+            <div class="alert alert-info">
+                <strong>${data.summary}</strong>
+            </div>
+
+            <div class="mb-3">
+                <h6>Overall Health Score: <span class="badge bg-primary">${Math.round(data.overall_sensor_health * 100)}%</span></h6>
+                <small class="text-muted">Potential Cost Savings: ₹${data.potential_cost_savings.toLocaleString()}</small>
+            </div>`;
+
+            Object.entries(data.sensor_health_reports).forEach(([sensorType, report]) => {
+                const healthPercentage = Math.round(report.health_score * 100);
+                let statusColor, statusIcon;
+
+                switch (report.status) {
+                    case 'healthy':
+                    case 'good':
+                        statusColor = 'success';
+                        statusIcon = 'fa-check-circle';
+                        break;
+                    case 'degrading':
+                        statusColor = 'warning';
+                        statusIcon = 'fa-exclamation-triangle';
+                        break;
+                    case 'critical':
+                        statusColor = 'danger';
+                        statusIcon = 'fa-times-circle';
+                        break;
+                    default:
+                        statusColor = 'secondary';
+                        statusIcon = 'fa-question-circle';
+                }
+
+                html += `
+                <div class="card mb-3 border-${statusColor}">
+                    <div class="card-header bg-${statusColor} text-white">
+                        <h6 class="mb-0">
+                            <i class="fas ${statusIcon}"></i>
+                            ${sensorType.replace('_', ' ').toUpperCase()} Sensor
+                            ${report.drift_detected ? '<span class="drift-indicator drift-detected" title="Drift Detected"></span>' : '<span class="drift-indicator drift-none" title="No Drift"></span>'}
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <p><strong>Health Score:</strong> ${healthPercentage}%</p>
+                                <p><strong>Status:</strong> ${report.status.toUpperCase()}</p>
+                                <p><strong>Noise Level:</strong> ${report.noise_level}</p>
+                                ${report.predicted_failure_date ? `<p><strong>⚠️ Predicted Failure:</strong> ${report.predicted_failure_date}</p>` : ''}
+                            </div>
+                            <div class="col-md-6">
+                                <p><strong>Drift Rate:</strong> ${report.drift_rate}/month</p>
+                                <p><strong>Stability Score:</strong> ${Math.round(report.stability_score * 100)}%</p>
+                                <p><strong>Confidence:</strong> ${Math.round(report.confidence_level * 100)}%</p>
+                                ${report.cost_savings > 0 ? `<p><strong>💰 Potential Savings:</strong> ₹${report.cost_savings.toLocaleString()}</p>` : ''}
+                            </div>
+                        </div>
+                        
+                        ${report.recommendations && report.recommendations.length > 0 ? `
+                        <div class="recommendations">
+                            <strong>🔧 Recommendations:</strong>
+                            <ul class="mt-2">
+                                ${report.recommendations.map(rec => `<li>${rec}</li>`).join('')}
+                            </ul>
+                        </div>` : ''}
+                    </div>
+                </div>`;
+            });
+
+            modalBody.innerHTML = html;
+
+            const modal = new bootstrap.Modal(document.getElementById('sensorHealthModal'));
+            modal.show();
+        }
+
+        // Set machine mode
+        async function setMachineMode(machineId, mode) {
+            try {
+                const response = await fetch(`/api/machine/${machineId}/mode`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ mode: mode })
+                });
+
+                const data = await response.json();
+                if (data.success) {
+                    showNotification(`Machine set to ${mode} mode`, 'success');
+                    setTimeout(() => {
+                        loadMachines();
+                        loadSensorHealth();
+                    }, 1000);
+                } else {
+                    showNotification('Error setting machine mode', 'error');
+                }
+            } catch (error) {
+                console.error('Error setting machine mode:', error);
+                showNotification('Error setting machine mode', 'error');
+            }
+        }
+
+        // Load alerts
+        async function loadAlerts() {
+            try {
+                const response = await fetch('/api/alerts');
+                const alerts = await response.json();
+                displayAlerts(alerts.slice(0, 5)); // Show latest 5 alerts
+            } catch (error) {
+                console.error('Error loading alerts:', error);
+            }
+        }
+
+        // Display alerts
+        function displayAlerts(alerts) {
+            const container = document.getElementById('alertsContainer');
+            
+            if (alerts.length === 0) {
+                container.innerHTML = '<div class="alert alert-success">No recent alerts. All systems operating normally.</div>';
+                return;
+            }
+
+            let html = '';
+            alerts.forEach(alert => {
+                const alertClass = alert.severity === 'critical' ? 'danger' : 
+                                 alert.severity === 'high' ? 'warning' : 'info';
+                const time = new Date(alert.created_at).toLocaleString();
+
+                html += `
+                <div class="alert alert-${alertClass} mb-2">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <strong>${alert.title}</strong>
+                            <p class="mb-1">${alert.message}</p>
+                            <small class="text-muted"><i class="fas fa-clock"></i> ${time}</small>
+                        </div>
+                        <span class="badge bg-${alertClass}">${alert.severity}</span>
+                    </div>
+                </div>`;
+            });
+
+            container.innerHTML = html;
+        }
+
+        // Utility functions
+        function refreshSensorHealth() {
+            showNotification('Refreshing sensor health data...', 'info');
+            loadSensorHealth();
+        }
+
+        function showSystemHealth() {
+            if (sensorHealthData.success) {
+                displaySensorHealthModal({
+                    machine: { name: 'System Overview' },
+                    summary: `System-wide health analysis for ${sensorHealthData.system_summary.total_machines} machines`,
+                    overall_sensor_health: sensorHealthData.system_summary.healthy_sensors / sensorHealthData.system_summary.total_sensors,
+                    potential_cost_savings: sensorHealthData.system_summary.total_potential_savings,
+                    sensor_health_reports: {}
+                });
+            }
+        }
+
+        function downloadHealthReport() {
+            // This would generate and download a PDF report
+            showNotification('Health report download feature coming soon!', 'info');
+        }
+
+        function showSensorHealth(machineId) {
+            showDetailedSensorHealth(machineId);
+        }
+
+        function showNotification(message, type = 'success') {
+            const notification = document.getElementById('notification');
+            notification.textContent = message;
+            notification.className = `notification ${type === 'error' ? 'bg-danger' : type === 'warning' ? 'bg-warning' : 'bg-success'}`;
+            notification.style.display = 'block';
+
+            setTimeout(() => {
+                notification.style.display = 'none';
+            }, 3000);
+        }
+    </script>
+</body>
+</html> 
