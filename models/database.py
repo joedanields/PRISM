@@ -45,6 +45,8 @@ class SensorReading(db.Model):
     is_anomaly = db.Column(db.Boolean, default=False)
     anomaly_score = db.Column(db.Float, default=0.0)
     timestamp = db.Column(db.DateTime, default=datetime.utcnow, index=True)
+    source = db.Column(db.String(20), default='simulator')  # F4: driver name
+    quality = db.Column(db.String(10), default='good')       # F4: good|uncertain|bad
 
     def to_dict(self):
         return {
@@ -55,7 +57,9 @@ class SensorReading(db.Model):
             'unit': self.unit,
             'is_anomaly': self.is_anomaly,
             'anomaly_score': self.anomaly_score,
-            'timestamp': self.timestamp.isoformat() if self.timestamp else None
+            'timestamp': self.timestamp.isoformat() if self.timestamp else None,
+            'source': self.source,
+            'quality': self.quality,
         }
 
 class Alert(db.Model):
@@ -94,4 +98,32 @@ class Alert(db.Model):
             'sms_sent': self.sms_sent,
             'created_at': self.created_at.isoformat() if self.created_at else None,
             'resolved_at': self.resolved_at.isoformat() if self.resolved_at else None
+        }
+
+class SensorHealth(db.Model):
+    """Per-sensor health tracking with time-based degradation"""
+
+    __tablename__ = 'sensor_health'
+
+    id = db.Column(db.Integer, primary_key=True)
+    machine_id = db.Column(db.Integer, db.ForeignKey('machines.id'), nullable=False)
+    sensor_type = db.Column(db.String(50), nullable=False)
+    health_percentage = db.Column(db.Float, default=100.0)
+    last_updated = db.Column(db.DateTime, default=datetime.utcnow)
+    status = db.Column(db.String(20), default='healthy')  # healthy, warning, degrading, critical, shutdown
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    __table_args__ = (
+        db.UniqueConstraint('machine_id', 'sensor_type', name='uq_sensor_health_machine_sensor'),
+    )
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'machine_id': self.machine_id,
+            'sensor_type': self.sensor_type,
+            'health_percentage': self.health_percentage,
+            'last_updated': self.last_updated.isoformat() if self.last_updated else None,
+            'status': self.status,
+            'created_at': self.created_at.isoformat() if self.created_at else None
         }
