@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block title %}Register - PRISM{% endblock %}
+{% block content %}
+<div class="row justify-content-center mt-5">
+    <div class="col-md-5">
+        <div class="card shadow">
+            <div class="card-body p-4">
+                <h3 class="card-title text-center mb-4">
+                    <i class="fas fa-user-plus me-2 text-primary"></i>Create Account
+                </h3>
+
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                {% for category, message in messages %}
+                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+                {% endfor %}
+                {% endif %}
+                {% endwith %}
+
+                <form method="POST" action="{{ url_for('register') }}">
+                    <div class="mb-3">
+                        <label for="username" class="form-label">Username</label>
+                        <input type="text" class="form-control" id="username" name="username"
+                               required minlength="3" autofocus>
+                        <div class="form-text">At least 3 characters.</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="email" class="form-label">Email</label>
+                        <input type="email" class="form-control" id="email" name="email" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="password" class="form-label">Password</label>
+                        <input type="password" class="form-control" id="password" name="password"
+                               required minlength="6">
+                        <div class="form-text">At least 6 characters.</div>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100 mb-3">
+                        <i class="fas fa-user-plus me-2"></i>Register
+                    </button>
+                </form>
+
+                <div class="text-center">
+                    <a href="{{ url_for('login') }}" class="text-decoration-none">Already have an account? Log in</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
