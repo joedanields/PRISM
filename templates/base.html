@@ -37,7 +37,7 @@
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('alerts_page') }}">
+                        <a class="nav-link" href="{{ url_for('api_alerts') }}">
                             <i class="fas fa-exclamation-triangle me-1"></i>Alerts
                             <span class="badge bg-warning ms-1" id="alert-count">0</span>
                         </a>
@@ -45,15 +45,25 @@
                 </ul>
 
                 <ul class="navbar-nav">
+                    {% if current_user.is_authenticated %}
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
-                            <i class="fas fa-user me-1"></i>System Operator
+                            <i class="fas fa-user me-1"></i>{{ current_user.username }}
+                            <span class="badge bg-secondary ms-1">{{ current_user.role }}</span>
                         </a>
-                        <ul class="dropdown-menu">
+                        <ul class="dropdown-menu dropdown-menu-end">
                             <li><a class="dropdown-item" href="#"><i class="fas fa-cog me-2"></i>Settings</a></li>
-                            <li><a class="dropdown-item" href="#"><i class="fas fa-sign-out-alt me-2"></i>Logout</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="{{ url_for('logout') }}"><i class="fas fa-sign-out-alt me-2"></i>Logout</a></li>
                         </ul>
                     </li>
+                    {% else %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('login') }}">
+                            <i class="fas fa-sign-in-alt me-1"></i>Login
+                        </a>
+                    </li>
+                    {% endif %}
                 </ul>
             </div>
         </div>
