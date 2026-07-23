@@ -1,0 +1,23 @@
+# PRISM dependencies
+# Core
+Flask>=2.3,<4.0
+Flask-SQLAlchemy>=3.1,<4.0
+SQLAlchemy>=2.0,<3.0
+python-dotenv>=1.0,<2.0
+
+# Auth (F3)
+Flask-Login>=0.6,<1.0
+Werkzeug>=2.3,<4.0
+
+# Notifications
+twilio>=8.0,<10.0
+
+# Chatbot (optional)
+openai>=1.0,<2.0
+
+# Dev / Test
+pytest>=7.0,<9.0
+pytest-cov>=4.0,<6.0
+
+# Migrations (Phase 0.6)
+alembic>=1.12,<2.0
