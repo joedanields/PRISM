@@ -1,0 +1,22 @@
+{
+  "name": "multi_fault",
+  "description": "Multiple simultaneous faults: temperature spike on reactor + stuck pressure on distillation column",
+  "version": "1.0",
+  "duration_seconds": 600,
+  "steps": [
+    {
+      "time_offset": 60,
+      "machine_type": "Chemical Reactor",
+      "sensor_type": "temperature",
+      "fault_pattern": "sudden_spike",
+      "params": {"spike_multiplier": 2.5, "spike_duration": 10}
+    },
+    {
+      "time_offset": 120,
+      "machine_type": "Distillation Column",
+      "sensor_type": "pressure",
+      "fault_pattern": "stuck_at",
+      "params": {"freeze_duration": 180}
+    }
+  ]
+}

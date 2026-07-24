@@ -51,8 +51,8 @@ push-based; `docker compose up` works; CI green. **This is the version you demo.
 
 ## Phase 2 — Real intelligence
 
-- [ ] **F6 — Historical replay & scenario engine** (needed to evaluate anything).
-- [ ] **F7 — ML anomaly detection** (Isolation Forest / autoencoder, fused with rules).
+- [x] **F6 — Historical replay & scenario engine** (needed to evaluate anything).
+- [x] **F7 — ML anomaly detection** (Isolation Forest / autoencoder, fused with rules).
 - [ ] **F10 — Evaluation harness & drift monitoring.**
       *Deliverable: replace or source every performance claim in the UI/README.*
 - [ ] **F11 — Explainable, physics-informed hybrid detection.**

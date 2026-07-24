@@ -1,0 +1,16 @@
+{
+  "name": "bearing_degradation",
+  "description": "Simulates progressive bearing wear on a Chemical Reactor's temperature sensor over 10 minutes",
+  "version": "1.0",
+  "duration_seconds": 600,
+  "target_machine_id": 1,
+  "steps": [
+    {
+      "time_offset": 0,
+      "machine_type": "Chemical Reactor",
+      "sensor_type": "temperature",
+      "fault_pattern": "bearing_degradation",
+      "params": {"degradation_rate": 0.3, "duration_seconds": 600}
+    }
+  ]
+}

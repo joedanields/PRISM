@@ -2399,6 +2399,280 @@ def set_individual_sensor_maintenance(machine_id, sensor_type):
         return jsonify({'success': False, 'error': str(e)})
 
 
+# ---------------------------------------------------------------------------
+# F6: Replay & Scenario endpoints
+# ---------------------------------------------------------------------------
+
+@app.route('/api/admin/replay', methods=['POST'])
+@login_required
+@_require_role('admin')
+def start_replay():
+    """Start a historical replay from the database.
+
+    Body JSON:
+        start: ISO datetime of start window
+        end: ISO datetime of end window
+        speed: playback multiplier (default 1.0, max 100.0)
+        machine_id: optional filter
+
+    Returns status of the replay buffer.
+    """
+    from ingestion.replay import ReplayDriver
+    from flask import Response
+
+    try:
+        data = request.get_json(force=True) if request.is_json else {}
+        start_str = data.get('start')
+        end_str = data.get('end')
+        if not start_str or not end_str:
+            return jsonify({'success': False, 'error': 'start and end required'}), 400
+
+        start = datetime.fromisoformat(start_str)
+        end = datetime.fromisoformat(end_str)
+        speed = float(data.get('speed', 1.0))
+        machine_id = data.get('machine_id')
+
+        replay = ReplayDriver(start, end, speed, machine_id)
+        replay.connect()
+
+        return jsonify({
+            'success': True,
+            'total_readings': replay.total_readings,
+            'speed': replay.speed,
+            'message': f'Loaded {replay.total_readings} readings for replay',
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+
+@app.route('/api/admin/scenarios')
+@login_required
+@_require_role('admin')
+def list_scenarios_endpoint():
+    """List available scenario files."""
+    from ingestion.replay import list_scenarios, SCENARIO_DIR
+    try:
+        files = list_scenarios(SCENARIO_DIR)
+        return jsonify({
+            'success': True,
+            'count': len(files),
+            'scenarios': files,
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+
+@app.route('/api/admin/scenario/<name>')
+@login_required
+@_require_role('admin')
+def get_scenario_endpoint(name):
+    """Get scenario details."""
+    from ingestion.replay import load_scenario, SCENARIO_DIR
+    import os
+    try:
+        path = os.path.join(SCENARIO_DIR, f"{name}.json")
+        if not os.path.exists(path):
+            return jsonify({'success': False, 'error': f'Scenario {name} not found'}), 404
+        scenario = load_scenario(path)
+        return jsonify({
+            'success': True,
+            'scenario': scenario.to_dict(),
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+
+@app.route('/api/admin/scenario/<name>/run', methods=['POST'])
+@login_required
+@_require_role('admin')
+def run_scenario(name):
+    """Run a scenario and inject readings into the DB.
+
+    Body JSON:
+        target_machine_id: machine to inject into (overrides scenario default)
+        speed: how many scenario-seconds per real second (default 10)
+    """
+    from ingestion.replay import load_scenario, ScenarioEngine, SCENARIO_DIR
+    import os
+
+    try:
+        path = os.path.join(SCENARIO_DIR, f"{name}.json")
+        if not os.path.exists(path):
+            return jsonify({'success': False, 'error': f'Scenario {name} not found'}), 404
+
+        scenario = load_scenario(path)
+        data = request.get_json(force=True) if request.is_json else {}
+        if 'target_machine_id' in data:
+            scenario.target_machine_id = data['target_machine_id']
+
+        engine = ScenarioEngine(scenario)
+        engine.start()
+
+        total_readings = 0
+        step = 1  # 1-second steps
+        while step <= scenario.duration_seconds:
+            readings = engine.generate_batch(step)
+            for r in readings:
+                # Persist to DB using the ingestion pipeline path
+                machine_id = scenario.target_machine_id or 1
+                reading = SensorReading(
+                    machine_id=machine_id,
+                    sensor_type=r.sensor_type,
+                    value=r.value,
+                    unit=r.unit,
+                    is_anomaly=r.is_anomaly,
+                    anomaly_score=0.5 if r.is_anomaly else 0.1,
+                    source=r.source,
+                    quality=r.quality,
+                )
+                db.session.add(reading)
+            total_readings += len(readings)
+            step += 1
+
+        db.session.commit()
+
+        return jsonify({
+            'success': True,
+            'scenario': name,
+            'duration_seconds': scenario.duration_seconds,
+            'total_readings': total_readings,
+            'message': f'Replayed {total_readings} readings over {scenario.duration_seconds}s',
+        })
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'error': str(e)})
+
+
+# ---------------------------------------------------------------------------
+# F7: ML Detection endpoints
+# ---------------------------------------------------------------------------
+
+@app.route('/api/admin/ml/train', methods=['POST'])
+@login_required
+@_require_role('admin')
+def train_ml_model():
+    """Train Isolation Forest on historical data.
+
+    Body JSON:
+        machine_id: which machine to train on (required)
+        hours: hours of history to use (default 24)
+        contamination: anomaly fraction expected (default 0.05)
+    """
+    from detection.ml import get_detector
+    import numpy as np
+
+    try:
+        data = request.get_json(force=True) if request.is_json else {}
+        machine_id = data.get('machine_id')
+        if not machine_id:
+            return jsonify({'success': False, 'error': 'machine_id required'}), 400
+
+        machine = Machine.query.get_or_404(machine_id)
+        hours = int(data.get('hours', 24))
+        contamination = float(data.get('contamination', 0.05))
+
+        cutoff = datetime.utcnow() - timedelta(hours=hours)
+        readings = SensorReading.query.filter(
+            SensorReading.machine_id == machine_id,
+            SensorReading.timestamp >= cutoff,
+        ).order_by(SensorReading.timestamp).all()
+
+        if len(readings) < 10:
+            return jsonify({'success': False, 'error': f'Need at least 10 readings, got {len(readings)}'}), 400
+
+        # Pivot to feature matrix
+        sensor_types = sorted(set(r.sensor_type for r in readings))
+        # Group readings by timestamp
+        from collections import defaultdict
+        by_ts: Dict[datetime, Dict[str, float]] = defaultdict(dict)
+        for r in readings:
+            by_ts[r.timestamp][r.sensor_type] = r.value
+
+        timestamps = sorted(by_ts.keys())
+        X = np.array([[by_ts[ts].get(st, 0.0) for st in sensor_types] for ts in timestamps])
+
+        detector = get_detector()
+        detector.ml.contamination = contamination
+        detector.train(machine.machine_type, X, sensor_types)
+        detector.ml.save(machine.machine_type)
+
+        return jsonify({
+            'success': True,
+            'machine_id': machine_id,
+            'machine_type': machine.machine_type,
+            'samples_used': len(timestamps),
+            'features': sensor_types,
+            'contamination': contamination,
+            'message': f'Trained model for {machine.machine_type}',
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+
+@app.route('/api/admin/ml/detect/<int:machine_id>')
+@login_required
+@_require_role('operator', 'maintainer', 'admin')
+def detect_on_machine(machine_id):
+    """Run ML detection on latest readings for a machine.
+
+    Returns the Detection result.
+    """
+    from detection.ml import detect_anomaly
+
+    try:
+        machine = Machine.query.get_or_404(machine_id)
+
+        # Get latest readings per sensor
+        sensor_types = db.session.query(SensorReading.sensor_type).filter_by(
+            machine_id=machine_id
+        ).distinct().all()
+        readings = {}
+        for (st,) in sensor_types:
+            r = SensorReading.query.filter_by(
+                machine_id=machine_id, sensor_type=st
+            ).order_by(SensorReading.timestamp.desc()).first()
+            if r:
+                readings[st] = r.value
+
+        if not readings:
+            return jsonify({'success': False, 'error': 'No readings found'}), 404
+
+        detection = detect_anomaly(machine.machine_type, readings)
+
+        return jsonify({
+            'success': True,
+            'machine_id': machine_id,
+            'readings': readings,
+            'detection': detection.to_dict(),
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+
+@app.route('/api/admin/ml/status')
+@login_required
+@_require_role('admin')
+def ml_status():
+    """Check ML model status — which models are loaded and available."""
+    from detection.ml import get_detector, HARD_LIMITS
+    import os
+
+    detector = get_detector()
+    models = {}
+    for mt in HARD_LIMITS:
+        path = os.path.join(detector.ml.MODEL_DIR, f"{mt.replace(' ', '_')}.pkl")
+        models[mt] = {
+            'trained': detector.ml._trained.get(mt, False),
+            'file_exists': os.path.exists(path),
+        }
+
+    return jsonify({
+        'success': True,
+        'models': models,
+        'any_trained': detector.ml.is_available,
+    })
+
+
 @app.route('/debug/fix-sample-data/<int:machine_id>')
 def fix_sample_data(machine_id):
     """Generate sample data to fix chart issues."""

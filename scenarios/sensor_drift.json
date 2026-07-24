@@ -1,0 +1,16 @@
+{
+  "name": "sensor_drift",
+  "description": "Gradual upward drift on distillation column pressure sensor over 5 minutes",
+  "version": "1.0",
+  "duration_seconds": 300,
+  "target_machine_id": 3,
+  "steps": [
+    {
+      "time_offset": 0,
+      "machine_type": "Distillation Column",
+      "sensor_type": "pressure",
+      "fault_pattern": "sensor_drift",
+      "params": {"drift_rate": 0.5, "duration_seconds": 300}
+    }
+  ]
+}

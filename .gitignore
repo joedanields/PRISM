@@ -136,6 +136,7 @@ celerybeat.pid
 
 # PRISM generated state
 machines.db
+models/ml/*.pkl
 
 # Environments
 .env

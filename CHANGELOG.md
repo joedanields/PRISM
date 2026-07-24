@@ -190,3 +190,55 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
   `health` (sensor health updates), `heartbeat` (keep-alive when idle).
 - 13 new tests: event formatting, helper functions (max_id, new readings/alerts),
   SSE endpoint status/headers, machine filtering, poll interval clamping.
+
+---
+
+## [F6 — Historical replay & scenario engine] — 2026-07-24
+
+### Added
+- **F6** — `ingestion/replay.py` with `ReplayDriver` and `ScenarioEngine`.
+- `ReplayDriver` — replays stored readings from DB at configurable speed (0.1x–100x).
+  Connects to DB, reads a time window, yields `Reading` objects with `source="replay(...)"`.
+  Tracks progress (0.0–1.0), supports machine_id filtering.
+- `ScenarioEngine` — generates synthetic fault-injection readings from JSON scenario definitions.
+  Supports 5 fault patterns: `sensor_drift`, `sudden_spike`, `stuck_at`,
+  `bearing_degradation`, `intermittent_fault`. Faults are time-indexed and stackable.
+- `Scenario` / `ScenarioStep` dataclasses with `to_dict()` serialization.
+- Scenario file I/O: `load_scenario()`, `save_scenario()`, `list_scenarios()`.
+- `scenarios/` directory with 3 built-in scenarios: `bearing_degradation.json`,
+  `sensor_drift.json`, `multi_fault.json`.
+- Admin API endpoints (all require `@login_required` + admin role):
+  - `POST /api/admin/replay` — load readings from DB for replay.
+  - `GET /api/admin/scenarios` — list available scenario files.
+  - `GET /api/admin/scenario/<name>` — get scenario details.
+  - `POST /api/admin/scenario/<name>/run` — run a scenario, inject readings into DB.
+- 24 new tests: ReplayDriver connect/read/filter/close, ScenarioEngine generation
+  for 4 fault patterns, scenario file I/O, fault pattern validation, API endpoints
+  (missing params, empty window, missing files, auth checks).
+
+---
+
+## [F7 — ML anomaly detection (unsupervised)] — 2026-07-24
+
+### Added
+- **F7** — `detection/` package with `detection/ml.py`.
+- `Detection` dataclass — unified contract: `is_anomaly`, `anomaly_score` (0–1),
+  `detector` name, `explanation`, `contributing_sensors`, `confidence`.
+  Serializes via `to_dict()`.
+- `IsolationForestDetector` — trains per machine type on healthy history.
+  Saves/loads model artifacts via `joblib` to `models/ml/`. Score mapped to [0, 1].
+- `HybridDetector` — fuses ML + hard-limit rules. Rules always win: if a hard-limit
+  breach is detected, score=1.0 and explanation cites the rule. ML provides nuance
+  for softer anomalies. `_rank_contributing()` returns z-score deviations per sensor.
+- `HARD_LIMITS` — per-machine-type safety limits that ML must never override.
+  Covers Chemical Reactor (temperature, pressure, flow_rate), Biotech Fermenter
+  (temperature, pH), Distillation Column (temperature_top/bottom, pressure).
+- `detect_anomaly()` convenience function used by ingestion pipeline.
+- Admin API endpoints (require auth + role):
+  - `POST /api/admin/ml/train` — train Isolation Forest from historical readings.
+    Accepts `machine_id`, `hours`, `contamination`.
+  - `GET /api/admin/ml/detect/<machine_id>` — run detection on latest readings.
+  - `GET /api/admin/ml/status` — which models are trained/available.
+- 24 new tests: Detection contract, IsolationForest train/predict/save/load,
+  HybridDetector normal/breach/ML-anomaly/unknown-machine fallback,
+  convenience function, API endpoints (status, train, detect, e2e train→detect).
