@@ -242,3 +242,54 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 - 24 new tests: Detection contract, IsolationForest train/predict/save/load,
   HybridDetector normal/breach/ML-anomaly/unknown-machine fallback,
   convenience function, API endpoints (status, train, detect, e2e train→detect).
+
+---
+
+## [F10 — Evaluation harness & drift monitoring] — 2026-07-24
+
+### Added
+- **F10** — `detection/eval.py` with `EvalHarness` and `DriftMonitor`.
+- `EvalRun` dataclass — stores evaluation results: TP/FP/TN/FN, precision, recall, F1,
+  false alarm rate, mean lead time. Computes derived metrics from confusion matrix.
+- `EvalHarness` — evaluates any detector function against labeled data. Takes list of
+  (readings_dict, is_anomaly_label) pairs, runs detector, computes classification metrics.
+  Persists runs to `eval_results/` as JSON. Loads historical runs for trend analysis.
+- `DriftMonitor` — monitors input distribution drift using KS two-sample test and
+  Population Stability Index (PSI). Set baselines from training data; compare current
+  distributions per sensor. Drift flagged when KS p-value < alpha or PSI > 0.2.
+- Admin API endpoints (require auth + admin):
+  - `POST /api/admin/eval/run` — run evaluation on a machine's data. Accepts `machine_id`,
+    `scenario_name`, `hours`, `detector` (ml/explainable/rule).
+  - `GET /api/admin/eval/results` — list past evaluation runs, filterable by scenario.
+  - `POST /api/admin/drift/check` — compare baseline vs current distributions per sensor.
+- 25 new tests: EvalRun metrics (perfect/all-wrong/zero-division), EvalHarness evaluation
+  (normal/anomalies/false-alarms/missed), save/load runs, DriftMonitor (similar/different
+  distributions, no-baseline, insufficient data, PSI computation, all-sensors check),
+  API endpoints (results, run, drift check, explainable detect).
+
+---
+
+## [F11 — Explainable, physics-informed hybrid detection] — 2026-07-24
+
+### Added
+- **F11** — `detection/explain.py` with `PhysicsDetector` and `ExplainableDetector`.
+- `PhysicsDetector` — checks physical plausibility constraints:
+  - Rate-of-change limits per sensor per machine type (e.g. temperature ≤ 5°C/s for reactor).
+  - Stuck/flatlined sensor detection via variance analysis over sliding window.
+  - Cross-sensor consistency rules: distillation bottom > top temp, reactor flow+pressure
+    correlation (low flow + high pressure = blockage), fermenter pH biological viability.
+- `ExplainableDetector` — three-layer detection with explained verdict:
+  1. Hard safety limits (score=1.0, always anomaly — from F7 HARD_LIMITS)
+  2. Physics plausibility rules (score=0.7–0.8)
+  3. ML Isolation Forest (score from model)
+  Each layer only fires if no higher-priority layer triggered. Every Detection carries
+  a plain-language explanation citing which layer fired and why.
+- `detect_explainable()` convenience function with automatic history tracking.
+- Configuration: `RATE_OF_CHANGE_LIMITS`, `CROSS_SENSOR_RULES`, `STUCK_VARIANCE_THRESHOLD`
+  defined per machine type (Chemical Reactor, Biotech Fermenter, Distillation Column).
+- Admin API endpoint: `GET /api/admin/detect/<machine_id>` — explainable detection on latest
+  readings with layered explanation.
+- 26 new tests: PhysicsDetector (rate-of-change normal/exceeded/warning/zero-elapsed,
+  stuck sensor normal/detected/insufficient, cross-sensor rules for distillation/reactor),
+  ExplainableDetector (normal, hard-limit-wins, rate-of-change, stuck sensor, layer
+  citation, history buffer, unknown machine), config completeness, API endpoint.

@@ -53,9 +53,9 @@ push-based; `docker compose up` works; CI green. **This is the version you demo.
 
 - [x] **F6 — Historical replay & scenario engine** (needed to evaluate anything).
 - [x] **F7 — ML anomaly detection** (Isolation Forest / autoencoder, fused with rules).
-- [ ] **F10 — Evaluation harness & drift monitoring.**
+- [x] **F10 — Evaluation harness & drift monitoring.**
       *Deliverable: replace or source every performance claim in the UI/README.*
-- [ ] **F11 — Explainable, physics-informed hybrid detection.**
+- [x] **F11 — Explainable, physics-informed hybrid detection.**
 - [ ] **F9 — Multivariate correlation & RCA.**
 - [ ] Remaining F4 drivers (OPC-UA, Modbus) if deferred from Phase 1.
 

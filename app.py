@@ -2673,6 +2673,226 @@ def ml_status():
     })
 
 
+# ---------------------------------------------------------------------------
+# F10: Evaluation harness endpoints
+# ---------------------------------------------------------------------------
+
+@app.route('/api/admin/eval/run', methods=['POST'])
+@login_required
+@_require_role('admin')
+def run_evaluation():
+    """Run an evaluation against labeled data.
+
+    Body JSON:
+        machine_id: which machine to evaluate
+        scenario_name: label for this run
+        hours: hours of data to use (default 24)
+        detector: 'ml', 'explainable', or 'rule' (default 'explainable')
+    """
+    from detection.eval import get_eval_harness
+    from detection.ml import detect_anomaly
+    from detection.explain import detect_explainable
+
+    try:
+        data = request.get_json(force=True) if request.is_json else {}
+        machine_id = data.get('machine_id')
+        if not machine_id:
+            return jsonify({'success': False, 'error': 'machine_id required'}), 400
+
+        machine = Machine.query.get_or_404(machine_id)
+        scenario_name = data.get('scenario_name', 'ad_hoc')
+        hours = int(data.get('hours', 24))
+        detector_name = data.get('detector', 'explainable')
+
+        cutoff = datetime.utcnow() - timedelta(hours=hours)
+        readings = SensorReading.query.filter(
+            SensorReading.machine_id == machine_id,
+            SensorReading.timestamp >= cutoff,
+        ).order_by(SensorReading.timestamp).all()
+
+        if len(readings) < 10:
+            return jsonify({'success': False, 'error': f'Need at least 10 readings, got {len(readings)}'}), 400
+
+        # Group by timestamp
+        from collections import defaultdict
+        by_ts: Dict = defaultdict(dict)
+        for r in readings:
+            by_ts[r.timestamp][r.sensor_type] = r.value
+
+        timestamps = sorted(by_ts.keys())
+        # Label: a reading is anomalous if its anomaly_score > 0.5
+        labeled_data = []
+        for ts in timestamps:
+            row_readings = by_ts[ts]
+            # Get the max anomaly score across sensors at this timestamp
+            sensor_scores = SensorReading.query.filter(
+                SensorReading.machine_id == machine_id,
+                SensorReading.timestamp == ts,
+            ).all()
+            is_anomaly = any(r.anomaly_score > 0.5 for r in sensor_scores)
+            labeled_data.append((row_readings, is_anomaly))
+
+        # Select detector function
+        if detector_name == 'ml':
+            det_func = detect_anomaly
+        elif detector_name == 'explainable':
+            det_func = detect_explainable
+        else:
+            det_func = lambda mt, rd: detect_anomaly(mt, rd)  # fallback to ML
+
+        harness = get_eval_harness()
+        run = harness.evaluate(
+            machine_type=machine.machine_type,
+            scenario_name=scenario_name,
+            labeled_data=labeled_data,
+            detector_func=det_func,
+        )
+        harness.save_run(run)
+
+        return jsonify({
+            'success': True,
+            'run': run.to_dict(),
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+
+@app.route('/api/admin/eval/results')
+@login_required
+@_require_role('admin')
+def get_eval_results():
+    """Get past evaluation results."""
+    from detection.eval import get_eval_harness
+    try:
+        scenario = request.args.get('scenario')
+        limit = int(request.args.get('limit', 50))
+        harness = get_eval_harness()
+        runs = harness.load_runs(scenario_name=scenario, limit=limit)
+        return jsonify({
+            'success': True,
+            'count': len(runs),
+            'runs': [r.to_dict() for r in runs],
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+
+@app.route('/api/admin/drift/check', methods=['POST'])
+@login_required
+@_require_role('admin')
+def check_drift():
+    """Check for model drift on a machine's sensors.
+
+    Body JSON:
+        machine_id: which machine to check
+        hours: hours of current data to compare (default 24)
+    """
+    from detection.eval import get_drift_monitor
+    import numpy as np
+
+    try:
+        data = request.get_json(force=True) if request.is_json else {}
+        machine_id = data.get('machine_id')
+        if not machine_id:
+            return jsonify({'success': False, 'error': 'machine_id required'}), 400
+
+        machine = Machine.query.get_or_404(machine_id)
+        hours = int(data.get('hours', 24))
+
+        # Get training baseline (older data)
+        baseline_cutoff = datetime.utcnow() - timedelta(hours=hours * 3)
+        baseline_readings = SensorReading.query.filter(
+            SensorReading.machine_id == machine_id,
+            SensorReading.timestamp >= baseline_cutoff,
+            SensorReading.timestamp < datetime.utcnow() - timedelta(hours=hours),
+        ).all()
+
+        # Get current data
+        current_cutoff = datetime.utcnow() - timedelta(hours=hours)
+        current_readings = SensorReading.query.filter(
+            SensorReading.machine_id == machine_id,
+            SensorReading.timestamp >= current_cutoff,
+        ).all()
+
+        if len(baseline_readings) < 10 or len(current_readings) < 10:
+            return jsonify({
+                'success': False,
+                'error': f'Need at least 10 readings in both windows (baseline: {len(baseline_readings)}, current: {len(current_readings)})',
+            }), 400
+
+        # Group by sensor
+        baseline_by_sensor: Dict[str, List[float]] = defaultdict(list)
+        for r in baseline_readings:
+            baseline_by_sensor[r.sensor_type].append(r.value)
+
+        current_by_sensor: Dict[str, List[float]] = defaultdict(list)
+        for r in current_readings:
+            current_by_sensor[r.sensor_type].append(r.value)
+
+        monitor = get_drift_monitor()
+        monitor.set_baseline_from_dict(machine.machine_type, baseline_by_sensor)
+
+        results = monitor.check_all_sensors(machine.machine_type, current_by_sensor)
+        any_drifted = any(r.drifted for r in results)
+
+        return jsonify({
+            'success': True,
+            'machine_id': machine_id,
+            'machine_type': machine.machine_type,
+            'baseline_count': len(baseline_readings),
+            'current_count': len(current_readings),
+            'any_drifted': any_drifted,
+            'sensors': [r.to_dict() for r in results],
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+
+# ---------------------------------------------------------------------------
+# F11: Explainable detection endpoint
+# ---------------------------------------------------------------------------
+
+@app.route('/api/admin/detect/<int:machine_id>')
+@login_required
+@_require_role('operator', 'maintainer', 'admin')
+def detect_on_machine_explainable(machine_id):
+    """Run explainable detection on latest readings for a machine.
+
+    Returns Detection with layered explanation (safety → physics → ML).
+    """
+    from detection.explain import detect_explainable
+
+    try:
+        machine = Machine.query.get_or_404(machine_id)
+
+        # Get latest readings per sensor
+        sensor_types = db.session.query(SensorReading.sensor_type).filter_by(
+            machine_id=machine_id
+        ).distinct().all()
+        readings = {}
+        for (st,) in sensor_types:
+            r = SensorReading.query.filter_by(
+                machine_id=machine_id, sensor_type=st
+            ).order_by(SensorReading.timestamp.desc()).first()
+            if r:
+                readings[st] = r.value
+
+        if not readings:
+            return jsonify({'success': False, 'error': 'No readings found'}), 404
+
+        detection = detect_explainable(machine.machine_type, readings)
+
+        return jsonify({
+            'success': True,
+            'machine_id': machine_id,
+            'machine_type': machine.machine_type,
+            'readings': readings,
+            'detection': detection.to_dict(),
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+
 @app.route('/debug/fix-sample-data/<int:machine_id>')
 def fix_sample_data(machine_id):
     """Generate sample data to fix chart issues."""
